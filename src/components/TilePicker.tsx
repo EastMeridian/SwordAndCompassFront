@@ -15,23 +15,36 @@ interface Props {
 
 const TilePicker = ({ onChange, value: selected }: Props) => {
   const handleMouseDown = (
-    event: React.MouseEvent<HTMLImageElement, MouseEvent>
+    event: React.MouseEvent<HTMLImageElement, MouseEvent> & {
+      target: { offsetLeft: number; offsetTop: number };
+    }
   ) => {
+    const x = Math.floor(
+      ((event.clientX - event.target.offsetLeft) / TILESET_WIDTH_SIZE) *
+        TILESET_WIDTH
+    );
+    const y = Math.floor(
+      ((event.clientY - event.target.offsetTop) / TILESET_HEIGHT_SIZE) *
+        TILESET_HEIGHT
+    );
+
     const position = {
-      x: Math.floor(
-        // @ts-ignore
-        ((event.clientX - event.target.offsetLeft) / TILESET_WIDTH_SIZE) *
-          TILESET_WIDTH
-      ),
-      y: Math.floor(
-        // @ts-ignore
-        ((event.clientY - event.target.offsetTop) / TILESET_HEIGHT_SIZE) *
-          TILESET_HEIGHT
-      ),
+      x,
+      y,
+      index: y * TILESET_WIDTH + x,
     };
+
+    console.log(
+      event.clientX,
+      event.target.offsetLeft,
+      event.clientY,
+      event.target.offsetTop
+    );
+    console.log({ position, event });
     onChange(position);
   };
 
+  console.log({ selected });
   return (
     <Container>
       <img src="assets/tileset.png" onMouseDown={handleMouseDown} />

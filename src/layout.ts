@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 export const AppContainer = styled.div`
   height: 100vh;
@@ -10,10 +10,14 @@ export const AppContainer = styled.div`
 export const TilemapContainer = styled.div`
   flex: 1;
   background-color: red;
-`
+`;
 
-export const TilesetContainer = styled.div`
-  background-color: white;
-  position: fixed;
-  right: 0;
+export const UIContainer = styled.div`
+  z-index: 5;
+  position: absolute;
+  width: 100%;
+  max-height: 100vh;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
 `;
