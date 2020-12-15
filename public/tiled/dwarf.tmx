@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="3" height="4" tilewidth="32" tileheight="32" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="characters.tsx"/>
+ <tileset firstgid="1" source="dwarf.tsx"/>
+ <layer id="1" name="Calque de Tuiles 1" width="3" height="4">
+  <data encoding="csv">
+1,2,3,
+13,14,15,
+25,26,27,
+37,38,39
+</data>
+ </layer>
+</map>
