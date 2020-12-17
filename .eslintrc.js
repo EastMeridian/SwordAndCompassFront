@@ -31,5 +31,7 @@ module.exports = {
     'react/require-default-props': 'off',
     'no-shadow': 'off',
     'no-plusplus': 'off',
+    'func-names': 'off',
+    'no-underscore-dangle': 'off',
   },
 };

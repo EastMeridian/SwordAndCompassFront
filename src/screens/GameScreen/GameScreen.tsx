@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import Phaser from 'phaser';
-import { config } from 'src/engine/Engine';
+import { config } from 'src/engine';
 import { GameView, CanvasView } from './layout';
 
 const GameScreen = () => {
-  console.log('GameScreen render.');
   useEffect(() => {
     const game = new Phaser.Game(config);
+    return () => game.destroy(true, false);
   });
   return (
     <GameView>

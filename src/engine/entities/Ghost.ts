@@ -43,12 +43,16 @@ class Ghost extends Phaser.Physics.Arcade.Sprite {
     const SPEED = 150;
     if (this.direction === Direction.UP) {
       this.setVelocity(0, -SPEED);
+      this.anims.play('monster_walk_up', true);
     } else if (this.direction === Direction.DOWN) {
       this.setVelocity(0, SPEED);
+      this.anims.play('monster_walk_down', true);
     } else if (this.direction === Direction.LEFT) {
       this.setVelocity(-SPEED, 0);
+      this.anims.play('monster_walk_left', true);
     } else if (this.direction === Direction.RIGHT) {
       this.setVelocity(SPEED, 0);
+      this.anims.play('monster_walk_right', true);
     }
   }
 

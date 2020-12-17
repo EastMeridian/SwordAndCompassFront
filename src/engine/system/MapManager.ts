@@ -13,7 +13,7 @@ class MapManager {
 
   constructor(scene: Phaser.Scene) {
     this.map = scene.make.tilemap({ key: 'map' });
-    this.tileset = this.map.addTilesetImage('dongeon');
+    this.tileset = this.map.addTilesetImage('dongeon', 'dongeon', 64, 64, 1, 2);
 
     this.groundLayer = this.map.createStaticLayer('ground', this.tileset, 0, 0);
     this.colliderLayer = this.map.createStaticLayer('collider', this.tileset, 0, 0);
