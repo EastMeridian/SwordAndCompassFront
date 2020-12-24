@@ -23,7 +23,7 @@
   },
   "include": [
     "src"
-  ],
+, "src/engine/events/.ts"  ],
   "typeRoots": [
     "./node_modules/phaser/types"
   ],

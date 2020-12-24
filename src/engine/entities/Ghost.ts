@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { FRAME_RATE } from 'src/constants';
 import { Direction } from 'src/utils/Direction';
 
 const getRandomDirection = (direction: Direction) => {
@@ -15,8 +14,8 @@ class Ghost extends Phaser.Physics.Arcade.Sprite {
 
   private moveEvent: Phaser.Time.TimerEvent;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, frame?: string | number) {
-    super(scene, x, y, texture, frame);
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
+    super(scene, x, y, texture);
 
     this.setScale(1.6);
     this.anims.play('monster_walk_down');
@@ -31,7 +30,6 @@ class Ghost extends Phaser.Physics.Arcade.Sprite {
       delay: 2000,
       callback: () => {
         this.direction = getRandomDirection(this.direction);
-        console.log('addEvent');
       },
       loop: true,
     });
@@ -62,10 +60,10 @@ class Ghost extends Phaser.Physics.Arcade.Sprite {
     this.direction = getRandomDirection(this.direction);
   }
 
-  destroy(fromScene?: boolean) {
+  destroy() {
     this.moveEvent.destroy();
 
-    super.destroy(fromScene);
+    super.destroy();
   }
 }
 

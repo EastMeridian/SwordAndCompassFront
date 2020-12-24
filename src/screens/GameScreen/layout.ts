@@ -7,6 +7,7 @@ export const GameView = styled.div`
   overflow: hidden;
   display: flex;
   justify-content: center;
+  background-color: black;
 `;
 
 export const CanvasView = styled.div`
