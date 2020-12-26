@@ -1,21 +1,28 @@
 import Phaser from 'phaser';
-import { Direction } from 'src/utils/Direction';
+import { Direction, getDirectionFromOrientation } from 'src/utils/Direction';
 
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import { PLAYER_COINS_CHANGED } from 'src/engine/events/events';
-import Chest from './Chest';
+import Chest from '../objects/Chest';
+import SwordSwing from '../spells/SwordSwing';
 
 const PLAYER_SPEED = 200;
-const ARROW_SPEED = 1000;
 
 declare global {
   namespace Phaser.GameObjects {
     interface GameObjectFactory {
+
       player(x: number,
         y: number,
         texture: string,
         frame?: string | number
       ): Player
+
+      swordSwing(x: number,
+        y: number,
+        texture: string,
+        frame?: string | number
+      ): SwordSwing
     }
   }
 }
@@ -52,7 +59,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
   private activeChest?: Chest;
 
-  idleFrames: any;
+  private swordSwings?: Phaser.Physics.Arcade.Group;
+
+  private currentSwordSwing?: SwordSwing;
+
+  private idleFrames: any;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string, frame?: string | number) {
     super(scene, x, y, texture, frame);
@@ -66,44 +77,80 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     };
 
     scene.input.on('pointerdown', function (this: Player, pointer: Phaser.Input.Pointer) {
-      this.throwArrow(pointer);
+      this.swingSword(pointer);
     }, this);
+
+    this.anims.play('walk_down');
+
+    this.depth = 1;
   }
 
   setArrows(arrows: Phaser.Physics.Arcade.Group) {
     this.arrows = arrows;
   }
 
+  setSwordSwings(swordSwings: Phaser.Physics.Arcade.Group) {
+    this.swordSwings = swordSwings;
+  }
+
   setActiveChest(chest: Chest) {
     this.activeChest = chest;
   }
 
-  private throwArrow(pointer: Phaser.Input.Pointer) {
-    if (!this.arrows) return;
+  private swingSword(pointer: Phaser.Input.Pointer) {
+    if (!this.swordSwings) return;
+    const orientation = new Phaser.Math
+      .Vector2(pointer.worldX - this.x, pointer.worldY - this.y)
+      .normalize();
+
+    const nextDirection = getDirectionFromOrientation(
+      this.x,
+      this.y,
+      pointer.worldX,
+      pointer.worldY,
+    );
     this.anims.stop();
+    this.setFrame(this.idleFrames[nextDirection]);
+
     this.setVelocity(0);
 
-    const dx = pointer.worldX - this.x;
-    const dy = pointer.worldY - this.y;
-    const direction = new Phaser.Math.Vector2(dx, dy).normalize();
-    const angle = direction.angle();
+    const speed = 300;
 
-    const arrow = this.arrows.get(this.x, this.y, 'arrow') as Phaser.Physics.Arcade.Image;
+    this.currentSwordSwing = this.swordSwings.get(this.x, this.y, 'weapon1');
+    /*
+    this.scene.tweens.add({
+      targets: this.body.velocity,
+      duration: 0,
+      x: orientation.x * speed,
+      y: orientation.y * speed,
+      ease: 'Stepped',
+      easeParams: [1],
+    }); */
+    this.currentSwordSwing?.swing(orientation, this.body.velocity);
+  }
+
+  private throwArrow(pointer: Phaser.Input.Pointer) {
+    if (!this.arrows) return;
+
+    const orientation = new Phaser.Math
+      .Vector2(pointer.worldX - this.x, pointer.worldY - this.y)
+      .normalize();
+
+    const nextDirection = getDirectionFromOrientation(
+      this.x,
+      this.y,
+      pointer.worldX,
+      pointer.worldY,
+    );
+    this.anims.stop();
+    this.setFrame(this.idleFrames[nextDirection]);
+
+    this.setVelocity(0);
+
+    const arrow = this.arrows.get(this.x, this.y);
 
     if (!arrow) return;
-
-    this.scene.sound.get('bow').play();
-    arrow
-      .setSize(64, 64)
-      .setActive(true)
-      .setVisible(true)
-      .setRotation(angle + 1.5707963)
-      .setScale(0.35)
-      .setVelocity(direction.x * ARROW_SPEED, direction.y * ARROW_SPEED)
-      .setPipeline('Light2D');
-
-    /*     arrow.x += direction.x * 16;
-    arrow.y += direction.y * 16; */
+    arrow.throw(orientation);
   }
 
   handleDamage(direction: Phaser.Math.Vector2) {
@@ -111,8 +158,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    if (this.healthState === HealthState.DAMAGE) return;
+    if (this.healthState === HealthState.DAMAGE || this.playerState === PlayerState.JUMPING) return;
 
+    this.scene.sound.get('damage').play();
     this._health -= 1;
 
     if (this._health <= 0) {
@@ -165,13 +213,23 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     const JUMP_COLOR = 0xff88ff;
     this.playerState = PlayerState.JUMPING;
     const shadows: Phaser.GameObjects.Image[] = [];
+
     this.anims.stop();
     this.setVelocity(0);
+
     this.setTint(JUMP_COLOR);
     const dx = pointer.worldX - this.x;
     const dy = pointer.worldY - this.y;
 
-    const direction = new Phaser.Math.Vector2(dx, dy).normalize();
+    const orientation = new Phaser.Math.Vector2(dx, dy).normalize();
+    const direction = getDirectionFromOrientation(
+      this.x,
+      this.y,
+      pointer.worldX,
+      pointer.worldY,
+    );
+    const jumpDirection = direction !== Direction.LEFT ? 1 : -1;
+
     const speed = 500;
 
     this.scene.sound.get('skill1').play();
@@ -179,7 +237,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
       targets: this,
       duration: 250,
       props: {
-        rotation: 3.141 * 2,
+        rotation: 3.141 * 2 * jumpDirection,
       },
       ease: 'Stepped',
       easeParams: [20],
@@ -187,8 +245,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.tweens.add({
       targets: this.body.velocity,
       duration: 250,
-      x: direction.x * speed,
-      y: direction.y * speed,
+      x: orientation.x * speed,
+      y: orientation.y * speed,
       ease: 'Stepped',
       onComplete: () => {
         this.playerState = PlayerState.NONE;
@@ -213,6 +271,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
     if (!keys) return;
 
+    if (this.currentSwordSwing) {
+      this.currentSwordSwing.update(this.x, this.y);
+    }
+
     if (pointer.isDown) {
       return;
     }
@@ -220,7 +282,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.playerState === PlayerState.JUMPING) return;
 
     if (Phaser.Input.Keyboard.JustDown(keys.space) && this.playerState === PlayerState.NONE) {
-      console.log('space', this.body.velocity);
       this.jump(pointer);
       return;
     }
@@ -230,9 +291,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const coins = this.activeChest.open();
         this._coins += coins;
         sceneEvents.emit(PLAYER_COINS_CHANGED, this._coins);
-        console.log(this._coins);
       }
     }
+
     // velocity
     this.setVelocity(0);
 
@@ -294,4 +355,18 @@ Phaser.GameObjects.GameObjectFactory.register('player', function (
 
   return sprite;
 });
+
+Phaser.GameObjects.GameObjectFactory.register('swordSwing', function (
+  this: Phaser.GameObjects.GameObjectFactory,
+  x: number,
+  y: number,
+) {
+  const sprite = new SwordSwing(this.scene, x, y);
+
+  this.displayList.add(sprite);
+  this.updateList.add(sprite);
+
+  return sprite;
+});
+
 export default Player;

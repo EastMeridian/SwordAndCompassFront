@@ -1,21 +1,23 @@
 /* eslint-disable import/no-duplicates */
 import Phaser from 'phaser';
 import MapManager from 'src/engine/system/MapManager';
-import Ghost from 'src/engine/entities/Ghost';
-import 'src/engine/entities/Player';
-import Player from 'src/engine/entities/Player';
-import Chest from 'src/engine/entities/Chest';
-import GroundSpikes from 'src/engine/entities/GroundSpike';
-import TorchLight from 'src/engine/entities/TorchLight';
+import Ghost from 'src/engine/entities/characters/Ghost';
+import 'src/engine/entities/characters/Player';
+import Player from 'src/engine/entities/characters/Player';
+import Chest from 'src/engine/entities/objects/Chest';
+import GroundSpikes from 'src/engine/entities/objects/GroundSpike';
+import TorchLight from 'src/engine/entities/objects/TorchLight';
+import Arrow from 'src/engine/entities/spells/Arrow';
 import { createPlayerAnimation } from 'src/engine/animations/createPlayerAnimation';
 import { createGhostAnimation } from 'src/engine/animations/createGhostAnimation';
 import { createChestAnimation } from 'src/engine/animations/createChestAnimation';
 import { createGroundSpikeAnimation } from 'src/engine/animations/createGroundSpikeAnimation';
 import { createTorchLightAnimation } from 'src/engine/animations/createTorchLightAnimation';
-
+import { createWeaponAnimation } from 'src/engine/animations/createWeaponAnimation';
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import { PLAYER_HEALTH_CHANGED } from 'src/engine/events/events';
-import GroundSpike from 'src/engine/entities/GroundSpike';
+import GroundSpike from 'src/engine/entities/objects/GroundSpike';
+import SwordSwing from 'src/engine/entities/spells/SwordSwing';
 
 class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -68,6 +70,7 @@ class GameScene extends Phaser.Scene {
     createChestAnimation(this);
     createTorchLightAnimation(this);
     createGroundSpikeAnimation(this);
+    createWeaponAnimation(this);
 
     this.mapManager = new MapManager(this);
 
@@ -91,6 +94,10 @@ class GameScene extends Phaser.Scene {
 
     const groundSpikes = this.physics.add.staticGroup({
       classType: GroundSpikes,
+    });
+
+    const swordSwings = this.physics.add.group({
+      classType: SwordSwing,
     });
 
     const chestsLayer = this.mapManager.map.getObjectLayer('chests');
@@ -119,7 +126,7 @@ class GameScene extends Phaser.Scene {
     });
 
     this.arrows = this.physics.add.group({
-      classType: Phaser.Physics.Arcade.Image,
+      classType: Arrow,
     });
 
     this.torchLights = this.physics.add.staticGroup({
@@ -128,9 +135,14 @@ class GameScene extends Phaser.Scene {
 
     this.player = this.add.player(400, 300, 'dwarf').setPipeline('Light2D');
     this.player.setArrows(this.arrows);
-
+    this.player.setSwordSwings(swordSwings);
     this.physics.add.collider(this.player, this.mapManager.colliderLayer);
     this.physics.add.collider(this.monsters, this.mapManager.colliderLayer);
+
+    this.physics.add.collider(swordSwings, this.monsters, () => {
+      console.log('SLASHED');
+    });
+
     this.physics.add.collider(
       this.player,
       chests,
@@ -195,6 +207,7 @@ class GameScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     const pointer = this.input.mousePointer;
+
     if (this.player) {
       this.player.update(this.keys, pointer);
 
@@ -219,7 +232,6 @@ class GameScene extends Phaser.Scene {
     const spike = obj2 as GroundSpike;
 
     if (spike.isUp()) {
-      this.sound.get('damage').play();
       const dx = this.player.x - spike.x;
       const dy = this.player.y - spike.y;
 
@@ -262,8 +274,6 @@ class GameScene extends Phaser.Scene {
     obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
-    console.log(this.player);
-    this.sound.get('damage').play();
     const monster = obj2 as Ghost;
     const dx = this.player.x - monster.x;
     const dy = this.player.y - monster.y;

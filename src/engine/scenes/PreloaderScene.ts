@@ -15,6 +15,11 @@ class PreloaderScene extends Phaser.Scene {
     this.load.spritesheet('lights', 'assets/sprites/other_2.png', { frameWidth: 32, frameHeight: 64 });
     this.load.spritesheet('monster', 'assets/sprites/monster_1.png', { frameWidth: 32, frameHeight: 32 });
 
+    this.load.spritesheet('weapon1', 'assets/sprites/weapon_1.png', {
+      frameWidth: 96,
+      frameHeight: 64,
+    });
+
     this.load.audio('chest', ['assets/sounds/SE/Chest.ogg']);
     this.load.audio('skill1', ['assets/sounds/SE/Skill1.ogg']);
     this.load.audio('bow', ['assets/sounds/SE/Bow3.ogg']);

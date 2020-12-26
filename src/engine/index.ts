@@ -12,7 +12,7 @@ export const config: Phaser.Types.Core.GameConfig = {
     default: 'arcade',
     arcade: {
       fps: 64,
-      /* debug: true, */
+      debug: true,
     },
   },
   render: {

@@ -17,7 +17,7 @@ class MapManager {
 
     this.groundLayer = this.map.createLayer('ground', this.tileset, 0, 0).setPipeline('Light2D');
     this.colliderLayer = this.map.createLayer('collider', this.tileset, 0, 0).setPipeline('Light2D');
-    this.overlayLayer = this.map.createLayer('overlay', this.tileset, 0, 0).setDepth(1).setPipeline('Light2D');
+    this.overlayLayer = this.map.createLayer('overlay', this.tileset, 0, 0).setDepth(2).setPipeline('Light2D');
 
     this.colliderLayer.setCollisionByExclusion([-1]);
   }
