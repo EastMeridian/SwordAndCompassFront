@@ -6,13 +6,14 @@ import GameUI from './scenes/GameUIScene';
 export const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.WEBGL,
   parent: 'game-container',
-  width: window.innerWidth * 0.75,
-  height: window.innerHeight * 0.75,
+  width: window.innerWidth,
+  height: window.innerHeight,
   physics: {
     default: 'arcade',
     arcade: {
       fps: 64,
-      debug: true,
+      /* debug: true, */
+      /*  overlapBias: 64, */
     },
   },
   render: {

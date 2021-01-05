@@ -1,46 +1,64 @@
 import Phaser from 'phaser';
+import { Direction } from 'src/utils/Direction';
+import { PIPELINE } from 'src/constants';
+import { Skill } from 'src/engine/components/skills/Skill';
+import Character from '../characters/Character';
 
-class SwordSwing extends Phaser.GameObjects.Sprite {
+const SPRITE_RATIO = 0.3;
+
+class SwordSwing extends Phaser.GameObjects.Rectangle {
   private direction!: Phaser.Math.Vector2;
 
-  private boundingBox!: Phaser.GameObjects.Rectangle
+  private sprite:Phaser.GameObjects.Sprite
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'weapon1');
+    super(scene, x, y, 56, 56, 0xffffff);
+
+    this.sprite = scene.add.sprite(x, y, 'weapon1');
   }
 
-  swing(direction: Phaser.Math.Vector2, velocity: Phaser.Math.Vector2) {
-    this.depth = 0;
-
-    this.direction = direction.scale(25);
+  use(
+    direction: Phaser.Math.Vector2,
+    character: Character,
+    onComplete: () => void,
+  ) {
+    this.direction = direction.normalize().scale(64);
     const angle = this.direction.angle();
 
-    /*     this.boundingBox = this.scene.add.rectangle(this.x, this.y, 48, 48, 0xffffff)
-      .setAlpha(0)
-      .setPosition(this.x + this.direction.x * 2, this.y + this.direction.y * 2);
-    this.scene.physics.add.existing(this.boundingBox); */
-
     this
-      .setSize(48, 48)
+      .setAlpha(0)
+      .setPosition(this.x + this.direction.x, this.y + this.direction.y);
+
+    this.sprite
+      /* .setSize(48, 48) */
       .setFlipX(true)
-      .setPosition(this.x + this.direction.x, this.y + this.direction.y)
-      .setOrigin(0.5, 0.85)
+      .setScale(1.4)
+      .setPosition(
+        this.x + this.direction.x * SPRITE_RATIO,
+        this.y + this.direction.y * SPRITE_RATIO,
+      )
+      .setOrigin(0.5, 0.9)
       .setRotation(angle - ((-Math.PI) / 4))
-      .setPipeline('Light2D')
-      .play('weapon_swing')
+      .setDepth(character.direction.value === Direction.DOWN ? 1 : 0)
+      .setPipeline(PIPELINE)
+      .play('weapon_swing_1')
       .on('animationcomplete', () => {
-        /* console.log('DESTROYED'); */
+        onComplete();
         this.destroy();
       });
   }
 
-  update(parentX: number, parentY: number) {
-    this.setPosition(parentX + this.direction.x, parentY + this.direction.y);
+  update(character: Character) {
+    this.setPosition(character.x + this.direction.x, character.y + this.direction.y);
+    this.sprite.setPosition(
+      character.x + this.direction.x * SPRITE_RATIO,
+      character.y + this.direction.y * SPRITE_RATIO,
+    );
   }
 
   destroy() {
     super.destroy();
-    this.boundingBox.destroy();
+    this.sprite.destroy();
   }
 }
 

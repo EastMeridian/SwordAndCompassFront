@@ -1,23 +1,36 @@
 /* eslint-disable import/no-duplicates */
 import Phaser from 'phaser';
 import MapManager from 'src/engine/system/MapManager';
-import Ghost from 'src/engine/entities/characters/Ghost';
-import 'src/engine/entities/characters/Player';
-import Player from 'src/engine/entities/characters/Player';
+import Ghost from 'src/engine/entities/characters/Ghost/Ghost';
+import 'src/engine/entities/characters/Player/Player';
+import Player from 'src/engine/entities/characters/Player/Player';
 import Chest from 'src/engine/entities/objects/Chest';
 import GroundSpikes from 'src/engine/entities/objects/GroundSpike';
 import TorchLight from 'src/engine/entities/objects/TorchLight';
 import Arrow from 'src/engine/entities/spells/Arrow';
 import { createPlayerAnimation } from 'src/engine/animations/createPlayerAnimation';
-import { createGhostAnimation } from 'src/engine/animations/createGhostAnimation';
+import {
+  createBokoblinAnimation,
+  createGhostAnimation,
+  createSkeletonAnimation,
+} from 'src/engine/animations/createMonsterAnimation';
 import { createChestAnimation } from 'src/engine/animations/createChestAnimation';
 import { createGroundSpikeAnimation } from 'src/engine/animations/createGroundSpikeAnimation';
 import { createTorchLightAnimation } from 'src/engine/animations/createTorchLightAnimation';
-import { createWeaponAnimation } from 'src/engine/animations/createWeaponAnimation';
+import { createWeapon1Animation } from 'src/engine/animations/createWeaponAnimation';
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import { PLAYER_HEALTH_CHANGED } from 'src/engine/events/events';
 import GroundSpike from 'src/engine/entities/objects/GroundSpike';
 import SwordSwing from 'src/engine/entities/spells/SwordSwing';
+import Bokoblin from 'src/engine/entities/characters/Bokoblin/Bokoblin';
+import DetectionCircle from 'src/engine/entities/others/DetectionCircle';
+import { correctTiledPointX, correctTiledPointY } from 'src/utils/misc';
+import { getOverlapPercentage } from 'src/utils/Collisions';
+import { createBalloonAnimation } from '../animations/createBalloonAnimation';
+import Character from '../entities/characters/Character';
+import Skeleton from '../entities/characters/Skeleton/Skeleton';
+import WeaponSkill from '../components/skills/WeaponSkill';
+import ArrowSkill from '../components/skills/ArrowSkill';
 
 class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -28,7 +41,11 @@ class GameScene extends Phaser.Scene {
 
   private arrows!: Phaser.Physics.Arcade.Group;
 
-  private monsters!: Phaser.Physics.Arcade.Group;
+  private ghosts!: Phaser.Physics.Arcade.Group;
+
+  private skeletons!: Phaser.Physics.Arcade.Group;
+
+  private bokoblins!: Phaser.Physics.Arcade.Group;
 
   private torchLights!: Phaser.Physics.Arcade.StaticGroup;
 
@@ -38,13 +55,15 @@ class GameScene extends Phaser.Scene {
 
   private bigLens!: Phaser.GameObjects.Arc;
 
+  private bokoblin!: Bokoblin;
+
   constructor() {
     super('game');
   }
 
   preload() {
     const {
-      Z, Q, S, D, E, SPACE,
+      Z, Q, S, D, E, A, SPACE,
     } = Phaser.Input.Keyboard.KeyCodes;
 
     this.keys = this.input.keyboard.addKeys({
@@ -54,6 +73,7 @@ class GameScene extends Phaser.Scene {
       down: S,
       space: SPACE,
       E,
+      A,
     });
   }
 
@@ -67,10 +87,13 @@ class GameScene extends Phaser.Scene {
     this.scene.run('game-ui');
     createPlayerAnimation(this);
     createGhostAnimation(this);
+    createBokoblinAnimation(this);
     createChestAnimation(this);
     createTorchLightAnimation(this);
     createGroundSpikeAnimation(this);
-    createWeaponAnimation(this);
+    createWeapon1Animation(this);
+    createBalloonAnimation(this);
+    createSkeletonAnimation(this);
 
     this.mapManager = new MapManager(this);
 
@@ -100,20 +123,58 @@ class GameScene extends Phaser.Scene {
       classType: SwordSwing,
     });
 
+    const enemySwordSwings = this.physics.add.group({
+      classType: SwordSwing,
+    });
+
+    const holesObjects = this.physics.add.staticGroup({
+      classType: Phaser.GameObjects.Rectangle,
+    });
+
+    const detectionCircles = this.physics.add.group({
+      classType: DetectionCircle,
+      createCallback: (o) => {
+        const circle = o as DetectionCircle;
+        circle
+          .setAlpha(0)
+          .setOrigin(0, 0);
+      },
+    });
+
     const chestsLayer = this.mapManager.map.getObjectLayer('chests');
     const ghostLayer = this.mapManager.map.getObjectLayer('ghosts');
     const lightLayer = this.mapManager.map.getObjectLayer('lights');
     const spikeLayer = this.mapManager.map.getObjectLayer('spikes');
+    const holesLayer = this.mapManager.map.getObjectLayer('holes');
+    const startPosition = this.mapManager.map.getObjectLayer('start');
+
+    holesLayer.objects.forEach((hole) => {
+      if (hole) {
+        const slipRectangle = this.add.rectangle(
+          hole.x! + hole.width! * 0.5,
+          hole.y! + hole.height! * 0.5,
+          hole.width, hole.height,
+        );
+
+        const rectangle = this.add.rectangle(
+          hole.x! + hole.width! * 0.5,
+          hole.y! + hole.height! * 0.5,
+          hole.width, hole.height,
+        );
+        rectangle.body = new Phaser.Physics.Arcade.StaticBody(this.physics.world, rectangle);
+        holesObjects.add(this.physics.add.existing(rectangle));
+      }
+    });
 
     chestsLayer.objects.forEach((chest) => {
-      chests.get(chest.x, chest.y! - chest.height! * 0.5, 'chest').setPipeline('Light2D');
+      chests.get(correctTiledPointX(chest), correctTiledPointY(chest), 'chest').setPipeline('Light2D');
     });
 
     spikeLayer.objects.forEach((spike) => {
-      groundSpikes.get(spike.x! + spike.width! * 0.5, spike.y! - spike.height! * 0.5, 'chest');
+      groundSpikes.get(correctTiledPointX(spike), correctTiledPointY(spike), 'chest');
     });
 
-    this.monsters = this.physics.add.group({
+    this.ghosts = this.physics.add.group({
       classType: Ghost,
       createCallback: (go) => {
         const ghostGo = go as Ghost;
@@ -121,8 +182,16 @@ class GameScene extends Phaser.Scene {
       },
     });
 
+    this.skeletons = this.physics.add.group({
+      classType: Skeleton,
+    });
+
+    this.bokoblins = this.physics.add.group({
+      classType: Bokoblin,
+    });
+
     ghostLayer.objects.forEach((ghost) => {
-      this.monsters.get(ghost.x, ghost.y, 'ghost').setPipeline('Light2D');
+      this.ghosts.get(ghost.x, ghost.y, 'monster').setPipeline('Light2D');
     });
 
     this.arrows = this.physics.add.group({
@@ -133,15 +202,70 @@ class GameScene extends Phaser.Scene {
       classType: TorchLight,
     });
 
-    this.player = this.add.player(400, 300, 'dwarf').setPipeline('Light2D');
+    this.player = this.add.player(
+      (startPosition.objects[0].x || 0) + 24,
+      (startPosition.objects[0].y || 0) + 24,
+      'character',
+    ).setPipeline('Light2D');
     this.player.setArrows(this.arrows);
-    this.player.setSwordSwings(swordSwings);
-    this.physics.add.collider(this.player, this.mapManager.colliderLayer);
-    this.physics.add.collider(this.monsters, this.mapManager.colliderLayer);
 
-    this.physics.add.collider(swordSwings, this.monsters, () => {
-      console.log('SLASHED');
-    });
+    this.bokoblin = this.bokoblins.get(700, 650, 'monster')
+      .setDetectionCircle(detectionCircles)
+      .setPipeline('Light2D');
+
+    this.bokoblin.skills
+      .add('weapon', new WeaponSkill(enemySwordSwings));
+    this.player.skills
+      .add('arrow', new ArrowSkill(this.arrows))
+      .add('weapon', new WeaponSkill(swordSwings));
+    this.physics.add.collider([this.player], this.mapManager.colliderLayer);/* , () => {
+      if (this.player.isJumping()) this.cameras.main.shake(300, 0.01);
+    } */
+
+    this.physics.add.collider([
+      this.ghosts,
+      this.bokoblins,
+      this.skeletons,
+    ],
+    holesObjects);
+
+    this.physics.add.overlap(
+      this.player,
+      holesObjects,
+      this.handlePlayerHoleCollision,
+      undefined,
+      this,
+    );
+
+    this.physics.add.overlap(
+      this.player,
+      detectionCircles,
+      this.handlePlayerDetectionCollison,
+      undefined,
+      this,
+    );
+
+    this.physics.add.collider([
+      this.ghosts,
+      this.bokoblins,
+      this.skeletons,
+    ], this.mapManager.colliderLayer);
+
+    this.physics.add.overlap(
+      swordSwings,
+      [this.ghosts, this.skeletons, this.bokoblins],
+      this.handleSwordMonsterCollision,
+      undefined,
+      this,
+    );
+
+    this.physics.add.overlap(
+      enemySwordSwings,
+      this.player,
+      this.handleSwordPLayerCollision,
+      undefined,
+      this,
+    );
 
     this.physics.add.collider(
       this.player,
@@ -168,16 +292,16 @@ class GameScene extends Phaser.Scene {
     );
 
     this.playerGhostCollider = this.physics.add.collider(
-      this.monsters,
+      [this.ghosts, this.bokoblins, this.skeletons],
       this.player,
-      this.handlePLayerMonsterCollision,
+      this.handlePlayerMonsterCollision,
       undefined,
       this,
     );
 
-    this.physics.add.collider(
+    this.physics.add.overlap(
       this.arrows,
-      this.monsters,
+      [this.ghosts, this.bokoblins, this.skeletons],
       this.handleArrowsMonsterCollision,
       undefined,
       this,
@@ -188,9 +312,9 @@ class GameScene extends Phaser.Scene {
       this.torchLights,
     );
 
-    this.cameras.main.startFollow(this.player, true);
+    this.cameras.main.startFollow(this.player/* , true, 0.05, 0.05 */);
 
-    this.cameras.main.setZoom(1);
+    this.cameras.main.setZoom(1.2);
 
     this.lights.enable();
 
@@ -202,31 +326,77 @@ class GameScene extends Phaser.Scene {
 
     this.bigLens = this.add.circle(400, 300, 8, 0xffffff, 0.4).setDepth(2);
 
-    this.sound.volume = 0.1;
+    this.sound.volume = 0.01;
+
+    this.cameras.main.fadeIn(1500);
   }
 
   update(time: number, delta: number) {
     const pointer = this.input.mousePointer;
-
     if (this.player) {
-      this.player.update(this.keys, pointer);
+      this.player.update(this.keys);
 
-      const dx = pointer.worldX - this.player.x;
-      const dy = pointer.worldY - this.player.y;
+      if (!this.player.health.isDead()) {
+        const dx = pointer.worldX - this.player.x;
+        const dy = pointer.worldY - this.player.y;
 
-      const baseVector = new Phaser.Math.Vector2(dx, dy).normalize().scale(50);
-      const direction = new Phaser.Math.Vector2(dx, dy).add(baseVector).limit(200);
+        const baseVector = new Phaser.Math.Vector2(dx, dy).normalize().scale(50);
+        const direction = new Phaser.Math.Vector2(dx, dy).add(baseVector).limit(200);
 
-      this.smallLens.x = this.player.x + direction.x / 1.5;
-      this.smallLens.y = this.player.y + direction.y / 1.5;
+        this.smallLens.x = this.player.x + direction.x / 1.5;
+        this.smallLens.y = this.player.y + direction.y / 1.5;
 
-      this.bigLens.x = this.player.x + direction.x;
-      this.bigLens.y = this.player.y + direction.y;
+        this.bigLens.x = this.player.x + direction.x;
+        this.bigLens.y = this.player.y + direction.y;
+      } else {
+        this.smallLens.setAlpha(0);
+        this.bigLens.setAlpha(0);
+      }
+    }
+
+    this.bokoblin?.update();
+  }
+
+  private handlePlayerHoleCollision(
+    _:Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ) {
+    const hole = obj2 as Phaser.GameObjects.Rectangle;
+    if (!this.player.isJumping()) {
+      const overlapRatio = getOverlapPercentage(
+        this.player.getTopLeft(),
+        this.player.getBottomRight(),
+        hole.getTopLeft(),
+        hole.getBottomRight(),
+      );
+
+      if (overlapRatio < 0.8) {
+        const holeCenter = hole.getCenter();
+        const dx = holeCenter.x - this.player.x;
+        const dy = holeCenter.y - this.player.y;
+        const slipVector = new Phaser.Math.Vector2(dx, dy)
+          .normalize()
+          .scale(20 + overlapRatio * 250);
+
+        this.player.body.velocity.x += slipVector.x;
+        this.player.body.velocity.y += slipVector.y;
+      } else {
+        this.player.setFalling(true);
+      }
     }
   }
 
+  private handlePlayerDetectionCollison = (
+    _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ) => {
+    const circle = obj2 as DetectionCircle;
+
+    circle.onDetect(this.player);
+  }
+
   private handlePlayerSpikeCollision(
-    obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const spike = obj2 as GroundSpike;
@@ -235,15 +405,18 @@ class GameScene extends Phaser.Scene {
       const dx = this.player.x - spike.x;
       const dy = this.player.y - spike.y;
 
-      const dir = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
+      const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(500);
 
-      this.player.handleDamage(dir);
-      sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health);
+      this.player.health.handleDamage({
+        amount: 1,
+        direction,
+      });
+      sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
     }
   }
 
   private handlePlayerChestCollision(
-    obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const chest = obj2 as Chest;
@@ -252,39 +425,89 @@ class GameScene extends Phaser.Scene {
 
   private handleArrowsWallCollision(
     obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const arrow = obj1 as Phaser.Physics.Arcade.Image;
     arrow.setVelocity(0);
 
-    this.arrows.kill(arrow);
+    this.time.delayedCall(1000, () => {
+      this.arrows.kill(arrow);
+    });
+  }
+
+  private handleSwordMonsterCollision(
+    _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ) {
+    const monster = obj2 as Character;
+    this.sound.get('monster').play();
+
+    const dx = monster.x - this.player.x;
+    const dy = monster.y - this.player.y;
+
+    const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
+    monster.health.handleDamage({
+      amount: 1,
+      direction,
+    });
+    sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
+  }
+
+  private handleSwordPLayerCollision(
+    obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ) {
+    const sword = obj1 as SwordSwing;
+    this.sound.get('monster').play();
+
+    const dx = obj1.body.x - this.player.x;
+    const dy = obj1.body.y - this.player.y;
+
+    const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
+    this.player.health.handleDamage({
+      amount: this.player.damage.amount,
+      direction,
+    });
+    sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
   }
 
   private handleArrowsMonsterCollision(
     obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
-    this.arrows.killAndHide(obj1);
-    this.monsters.killAndHide(obj2);
-    obj2.destroy();
+    const monster = obj2 as Character;
     this.sound.get('monster').play();
+
+    const dx = monster.x - this.player.x;
+    const dy = monster.y - this.player.y;
+
+    const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
+    monster.health.handleDamage({
+      amount: this.player.damage.amount,
+      direction,
+    });
+
+    this.time.delayedCall(1000, () => {
+      this.arrows.kill(obj1);
+    });
   }
 
-  private handlePLayerMonsterCollision(
-    obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  private handlePlayerMonsterCollision(
+    _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const monster = obj2 as Ghost;
     const dx = this.player.x - monster.x;
     const dy = this.player.y - monster.y;
 
-    const dir = new Phaser.Math.Vector2(dx, dy).normalize().scale(200);
+    const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
 
-    this.player.handleDamage(dir);
+    this.player.health.handleDamage({
+      amount: 1,
+      direction,
+    });
 
-    sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health);
+    sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
 
-    if (this.player.health <= 0) this.playerGhostCollider?.destroy();
+    if (this.player.health.value <= 0) this.playerGhostCollider?.destroy();
   }
 }
 
