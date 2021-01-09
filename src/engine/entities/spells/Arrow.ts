@@ -9,6 +9,10 @@ class Arrow extends Phaser.Physics.Arcade.Image {
 
   private sprite: Phaser.GameObjects.Sprite
 
+  public damage = 1;
+
+  private operating = true;
+
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'arrow');
     this.sprite = scene.add.sprite(x, y, 'weapon1');
@@ -43,6 +47,7 @@ class Arrow extends Phaser.Physics.Arcade.Image {
         const angle = direction.angle();
         const speed = 1000;
 
+        this.setOperating(true);
         this
           .setSize(64, 64)
           .setActive(true)
@@ -50,7 +55,7 @@ class Arrow extends Phaser.Physics.Arcade.Image {
           .setRotation(angle + 1.5707963)
           .setScale(0.5)
           .setVelocity(direction.x * speed, direction.y * speed)
-          .setPipeline('Light2D');
+          .setPipeline(PIPELINE);
 
         this.sprite?.setVisible(false);
         onComplete?.();
@@ -62,6 +67,14 @@ class Arrow extends Phaser.Physics.Arcade.Image {
       character.x + this.direction.x,
       character.y + this.direction.y,
     );
+  }
+
+  isOperating() {
+    return this.operating;
+  }
+
+  setOperating(operating: boolean) {
+    this.operating = operating;
   }
 
   destroy() {

@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import { PLAYER_HEALTH_CHANGED, PLAYER_COINS_CHANGED, PLAYER_ENERGY_CHANGED } from 'src/engine/events/events';
-
-const GREY = 0xecf0f1;
+import { Colors } from 'src/styles/Theme';
 
 class GameUIScene extends Phaser.Scene {
   private healthGauge!: Phaser.GameObjects.Rectangle;
@@ -16,13 +15,13 @@ class GameUIScene extends Phaser.Scene {
   create() {
     const coinsLabel = this.add.text(16, 64, '0');
 
-    this.add.rectangle(16, 16, 148, 8, GREY).setOrigin(0, 0);
+    this.add.rectangle(16, 16, 148, 8, Colors.grey).setOrigin(0, 0);
 
-    this.healthGauge = this.add.rectangle(16, 16, 148, 8, 0xc0392b).setOrigin(0, 0);
+    this.healthGauge = this.add.rectangle(16, 16, 148, 8, Colors.redLife).setOrigin(0, 0);
 
-    this.add.rectangle(16, 30, 148, 8, GREY).setOrigin(0, 0);
+    this.add.rectangle(16, 30, 148, 8, Colors.grey).setOrigin(0, 0);
 
-    this.energyGauge = this.add.rectangle(16, 30, 148, 8, 0x27ae60).setOrigin(0, 0);
+    this.energyGauge = this.add.rectangle(16, 30, 148, 8, Colors.greenEnergy).setOrigin(0, 0);
 
     sceneEvents.on(PLAYER_HEALTH_CHANGED, this.handlePlayerHealthChange, this);
 
@@ -39,10 +38,10 @@ class GameUIScene extends Phaser.Scene {
     });
   }
 
-  private handlePlayerHealthChange(health: number) {
+  private handlePlayerHealthChange({ health, maximum }: {health: number, maximum: number}) {
     this.tweens.add({
       targets: this.healthGauge,
-      scaleX: (health / 5) || 0,
+      scaleX: health / maximum,
       duration: 250,
       ease: 'Sine.eastIn',
     });

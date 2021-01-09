@@ -9,4 +9,11 @@ export const createBalloonAnimation = (scene: Phaser.Scene) => {
     frameRate: FRAME_RATE,
     yoyo: true,
   });
+
+  scene.anims.create({
+    key: 'idea_balloon',
+    frames: scene.anims.generateFrameNumbers('balloon', { start: 64, end: 71 }),
+    frameRate: FRAME_RATE,
+    yoyo: true,
+  });
 };

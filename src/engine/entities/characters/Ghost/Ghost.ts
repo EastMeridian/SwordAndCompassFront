@@ -12,6 +12,7 @@ import { StateMachine } from 'src/engine/system/StateMachine';
 import {
   MoveState,
   DamageState,
+  DeadState,
   StateMachineOptions,
 } from './States';
 import Character from '../Character';
@@ -33,13 +34,15 @@ class Ghost extends Character {
 
   public direction: DirectionComponent;
 
+  public speed = 150;
+
   orders: Orders = createOrders({ [Order.DOWN]: true });
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
 
     this.direction = new DirectionComponent(Direction.DOWN);
-    this.health = new HealthComponent(scene, this);
+    this.health = new HealthComponent({ scene, character: this });
 
     this.setScale(1.6);
     this.anims.play('ghost_walk_down');
@@ -62,6 +65,7 @@ class Ghost extends Character {
     this.stateMachine = new StateMachine('move', {
       move: new MoveState(),
       damage: new DamageState(),
+      dead: new DeadState(),
     }, { character: this, scene, name: 'ghost' });
   }
 
@@ -80,6 +84,7 @@ class Ghost extends Character {
 
   destroy() {
     this.moveEvent.destroy();
+    this.stateMachine?.destroy();
 
     super.destroy();
   }

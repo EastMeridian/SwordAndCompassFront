@@ -4,7 +4,7 @@ import { PIPELINE } from 'src/constants';
 import { Skill } from 'src/engine/components/skills/Skill';
 import Character from '../characters/Character';
 
-const SPRITE_RATIO = 0.3;
+const SPRITE_RATIO = 0.4;
 
 class SwordSwing extends Phaser.GameObjects.Rectangle {
   private direction!: Phaser.Math.Vector2;
@@ -24,7 +24,6 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
   ) {
     this.direction = direction.normalize().scale(64);
     const angle = this.direction.angle();
-
     this
       .setAlpha(0)
       .setPosition(this.x + this.direction.x, this.y + this.direction.y);
@@ -34,10 +33,10 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
       .setFlipX(true)
       .setScale(1.4)
       .setPosition(
-        this.x + this.direction.x * SPRITE_RATIO,
-        this.y + this.direction.y * SPRITE_RATIO,
+        this.x + direction.x * SPRITE_RATIO * 10,
+        this.y + direction.y * SPRITE_RATIO * 10,
       )
-      .setOrigin(0.5, 0.9)
+      .setOrigin(0.5, 0.85)
       .setRotation(angle - ((-Math.PI) / 4))
       .setDepth(character.direction.value === Direction.DOWN ? 1 : 0)
       .setPipeline(PIPELINE)
@@ -45,6 +44,7 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
       .on('animationcomplete', () => {
         onComplete();
         this.destroy();
+        this.sprite.destroy();
       });
   }
 
@@ -54,11 +54,6 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
       character.x + this.direction.x * SPRITE_RATIO,
       character.y + this.direction.y * SPRITE_RATIO,
     );
-  }
-
-  destroy() {
-    super.destroy();
-    this.sprite.destroy();
   }
 }
 

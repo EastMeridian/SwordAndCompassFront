@@ -33,13 +33,15 @@ class Skeleton extends Character {
 
   public direction: DirectionComponent;
 
+  public speed = 200;
+
   orders: Orders = createOrders({ [Order.DOWN]: true });
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
 
     this.direction = new DirectionComponent(Direction.DOWN);
-    this.health = new HealthComponent(scene, this);
+    this.health = new HealthComponent({ scene, character: this });
 
     this.setScale(1.6);
     this.anims.play('ghost_walk_down');

@@ -9,8 +9,6 @@ import { sceneEvents } from 'src/engine/events/EventCenter';
 import { PLAYER_HEALTH_CHANGED } from 'src/engine/events/events';
 import Player from './Player';
 
-const PLAYER_SPEED = 200;
-
 export type StateMachineOptions = {
   name: string;
   character: Player;
@@ -108,7 +106,7 @@ export class MoveState extends State<StateMachineOptions> {
       character.setVelocityX(1);
     }
 
-    character.body.velocity.normalize().scale(PLAYER_SPEED);
+    character.body.velocity.normalize().scale(character.speed);
 
     if (orders[Order.LEFT]) {
       character.direction.setDirection(Direction.LEFT);
@@ -132,9 +130,7 @@ export class ActionOneState extends State<StateMachineOptions> {
 
     const nextDirection = character.getPointerDirection();
     character.direction.setDirection(nextDirection);
-    console.log(character.skills);
-
-    character.skills.use('arrow', orientation, () => {
+    character.skills.useCurrent(orientation, () => {
       if (!character.health.isDead()) {
         this.stateMachine.transition('idle');
       }
@@ -175,7 +171,7 @@ export class FallingState extends State<StateMachineOptions> {
       ease: 'Quint.easeOut',
       onComplete: () => {
         character.health.setDamaged(HealthState.DEAD);
-        character.health.getOneShot();
+        character.health.oneShot();
         this.stateMachine.transition('dead');
         sceneEvents.emit(PLAYER_HEALTH_CHANGED, character.health.value);
       },
@@ -185,9 +181,7 @@ export class FallingState extends State<StateMachineOptions> {
 
 export class DeadState extends State<StateMachineOptions> {
   // eslint-disable-next-line class-methods-use-this
-  enter({ scene, character }: StateMachineOptions) {
-    scene.cameras.main.shake(300, 0.01);
-    scene.cameras.main.fadeOut(1500);
-    character.setVisible(false);
+  enter({ name, character }: StateMachineOptions) {
+    character.anims.play(`${name}_dead`, true);
   }
 }

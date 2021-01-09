@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import Preloader from './scenes/PreloaderScene';
-import Game from './scenes/GameScene';
-import GameUI from './scenes/GameUIScene';
+import GameScene from './scenes/GameScene';
+import GameUI from './scenes/UI/GameUIScene';
+import StartScreen from './scenes/UI/StartScreen';
 
 export const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.WEBGL,
@@ -19,5 +20,5 @@ export const config: Phaser.Types.Core.GameConfig = {
   render: {
     pixelArt: true,
   },
-  scene: [Preloader, Game, GameUI],
+  scene: [Preloader, GameScene, GameUI, StartScreen],
 };

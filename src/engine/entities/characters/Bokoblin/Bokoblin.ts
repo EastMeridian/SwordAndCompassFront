@@ -7,15 +7,16 @@ import DirectionComponent from 'src/engine/components/DirectionComponent';
 import { StateMachine } from 'src/engine/system/StateMachine';
 import { Cooldown } from 'src/utils/Cooldown';
 import SkillsComponent from 'src/engine/components/SkillsComponent';
+import { BokoblinData } from 'src/engine/data/entities';
 import Character from '../Character';
 import {
   IdleState,
   FollowState,
   DamageState,
   StrikeState,
-  StateMachineOptions,
-  DeadState,
+  StateMachineBokoblinOptions,
 } from './States';
+import { StateMachineCharacterOptions, DeadState } from '../States';
 
 class Bokoblin extends Character {
   private detectionCircle!: DetectionCircle;
@@ -32,26 +33,31 @@ class Bokoblin extends Character {
 
   public direction: DirectionComponent;
 
-  public stateMachine: StateMachine<StateMachineOptions> | null;
+  public stateMachine: StateMachine<
+    StateMachineCharacterOptions | StateMachineBokoblinOptions
+  >;
 
   public swingCooldown: Cooldown;
 
   public skills: SkillsComponent;
+
+  public speed: number;
 
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
     texture: string,
-    frame?: string,
+    { health, speed, cooldown }: BokoblinData,
   ) {
-    super(scene, x, y, texture, frame);
+    super(scene, x, y, texture);
 
     this.direction = new DirectionComponent(Direction.DOWN);
-    this.health = new HealthComponent(scene, this, 4);
+    this.health = new HealthComponent({ scene, character: this, health });
     this.skills = new SkillsComponent(this);
 
-    this.swingCooldown = new Cooldown(scene, 750);
+    this.speed = speed;
+    this.swingCooldown = new Cooldown(scene, cooldown);
     this.stateMachine = new StateMachine('idle', {
       idle: new IdleState(),
       follow: new FollowState(),
@@ -61,11 +67,12 @@ class Bokoblin extends Character {
     }, { character: this, scene, name: 'bokoblin' });
 
     this.depth = 1;
-    this.setScale(1.75);
-    this.anims.play('bokoblin_walk_down');
+    this.setScale(1.8);
 
-    this.expressionBalloon = this.scene.add.sprite(this.x, this.y, 'balloon')
-      .setOrigin(-0.05, 1)
+    this.anims.play(`bokoblin_idle_${Direction.DOWN}`);
+    this.expressionBalloon = this.scene.add.sprite(x, y, 'balloon')
+      .setScale(0.8)
+      .setOrigin(-0.25, 1.1)
       .setDepth(2)
       .setAlpha(0);
   }
@@ -88,20 +95,30 @@ class Bokoblin extends Character {
     return null;
   }
 
-  setDetectionCircle(detectionCircles: Phaser.Physics.Arcade.Group) {
+  setDetectionCircle(
+    detectionCircles: Phaser.Physics.Arcade.Group,
+    detectionCircleSize: number = 250,
+    hitCircleSize: number = 100,
+  ) {
     this.detectionCircle = detectionCircles.get(this.x, this.y);
     this.detectionCircle.setOwner(this)
       .setOnDetect((player) => this.detectPlayer(player))
       .body
-      .setCircle(200)
-      .setOffset(-172, -172);
+      .setCircle(detectionCircleSize)
+      .setOffset(
+        -detectionCircleSize + this.displayWidth / 2,
+        -detectionCircleSize + this.displayHeight / 2,
+      );
 
     this.swingDetectionCircle = detectionCircles.get(this.x, this.y);
     this.swingDetectionCircle.setOwner(this)
       .setOnDetect((player) => this.setSwingTarget(player))
       .body
-      .setCircle(90)
-      .setOffset(-62, -62);
+      .setCircle(hitCircleSize)
+      .setOffset(
+        -hitCircleSize + this.displayWidth / 2,
+        -hitCircleSize + this.displayHeight / 2,
+      );
     return this;
   }
 
@@ -116,19 +133,15 @@ class Bokoblin extends Character {
     }
   }
 
-  preUpdate(time: number, delta: number) {
-    super.preUpdate(time, delta);
+  update() {
     if (this.body) {
       this.detectionCircle?.copyPosition(this.body.position);
       this.swingDetectionCircle?.copyPosition(this.body.position);
       this.expressionBalloon?.copyPosition(this.body.position);
 
       this.stateMachine?.step();
+      this.skills.update();
     }
-  }
-
-  update() {
-    this.skills.update();
   }
 
   setTarget(player: Character | null) {
@@ -142,11 +155,10 @@ class Bokoblin extends Character {
   }
 
   destroy() {
-    this.stateMachine?.destroy();
-    this.detectionCircle?.destroy();
-    this.swingDetectionCircle?.destroy();
-    this.expressionBalloon?.destroy();
     super.destroy();
+    this.detectionCircle?.setActive(false);
+    this.swingDetectionCircle?.setActive(false);
+    this.expressionBalloon?.destroy();
   }
 }
 

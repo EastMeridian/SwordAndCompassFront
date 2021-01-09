@@ -4,8 +4,6 @@ import { State } from 'src/engine/system/StateMachine';
 import { Order } from 'src/utils/Order';
 import Skeleton from './Skeleton';
 
-const SPEED = 150;
-
 export type StateMachineOptions = {
   name: string;
   character: Skeleton;
@@ -32,7 +30,7 @@ export class MoveState extends State<StateMachineOptions> {
       character.setVelocity(1, -1);
     }
 
-    character.body.velocity.normalize().scale(SPEED);
+    character.body.velocity.normalize().scale(character.speed);
 
     character.anims.play(`${name}_walk_${character.direction.value}`, true);
   }

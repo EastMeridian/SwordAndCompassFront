@@ -1,24 +1,19 @@
 import Phaser from 'phaser';
 import { getDirectionFromVector } from 'src/utils/Direction';
 import { State } from 'src/engine/system/StateMachine';
-import { Order } from 'src/utils/Order';
 import Bokoblin from './Bokoblin';
+import Character from '../Character';
+import { StateMachineOptionsBase } from '../States';
 
-const SPEED = 100;
+export type StateMachineBokoblinOptions = StateMachineOptionsBase<Bokoblin>;
 
-export type StateMachineOptions = {
-  name: string;
-  character: Bokoblin;
-  scene: Phaser.Scene;
-};
-
-export class IdleState extends State<StateMachineOptions> {
-  enter = ({ character, name }: StateMachineOptions) => {
+export class IdleState extends State<StateMachineBokoblinOptions> {
+  enter = ({ character, name }: StateMachineBokoblinOptions) => {
     character.setVelocity(0);
     character.anims.play(`${name}_idle_${character.direction.value}`, true);
   }
 
-  execute({ character, name }: StateMachineOptions) {
+  execute({ character }: StateMachineBokoblinOptions) {
     if (character.health.isDead()) {
       this.stateMachine.transition('dead');
       return;
@@ -39,10 +34,10 @@ export class IdleState extends State<StateMachineOptions> {
   }
 }
 
-export class FollowState extends State<StateMachineOptions> {
-  execute({ character, name }: StateMachineOptions) {
+export class FollowState extends State<StateMachineBokoblinOptions> {
+  execute({ character, name }: StateMachineBokoblinOptions) {
     if (character.health.isDead()) {
-      this.stateMachine.transition('damage');
+      this.stateMachine.transition('dead');
       return;
     }
 
@@ -57,7 +52,7 @@ export class FollowState extends State<StateMachineOptions> {
 
     character.setVelocity(0);
 
-    const delta = character.getTargetDeltaVector()?.scale(SPEED);
+    const delta = character.getTargetDeltaVector()?.scale(character.speed);
     if (delta) {
       character.setVelocity(delta.x, delta.y);
       character.direction.setDirection(getDirectionFromVector(character.body.velocity));
@@ -66,10 +61,9 @@ export class FollowState extends State<StateMachineOptions> {
   }
 }
 
-export class StrikeState extends State<StateMachineOptions> {
-  enter({ character, scene, name }: StateMachineOptions) {
+export class StrikeState extends State<StateMachineBokoblinOptions> {
+  enter({ character, scene, name }: StateMachineBokoblinOptions) {
     character.setVelocity(0);
-    character.anims.play(`${name}_idle_${character.direction.value}`, true);
     if (character.swingTarget?.body) {
       character.swingCooldown.consume();
 
@@ -77,19 +71,30 @@ export class StrikeState extends State<StateMachineOptions> {
         character.swingTarget.body.position.x - character.x,
         character.swingTarget.body.position.y - character.y,
       ).normalize();
+      const nextDirection = getDirectionFromVector(orientation);
 
-      scene.time.delayedCall(Phaser.Math.Between(250, 1250), () => {
-        if (!character.health.isDead()) {
-          character.skills.use('weapon', orientation, () => {
-            character.setSwingTarget(null);
-            this.stateMachine.transition('idle');
-          });
+      character.direction.setDirection(nextDirection);
+
+      scene.time.delayedCall(Phaser.Math.Between(250, 750), () => {
+        if (scene) {
+          if (!character.health.isDead()) {
+            character.skills.useCurrent(orientation, () => {
+              character.setSwingTarget(null);
+              this.stateMachine.transition('idle');
+            });
+            character.anims.play(`${name}_idle_${character.direction.value}`, true);
+          }
         }
       });
     }
   }
 
-  execute({ character, name, scene }: StateMachineOptions) {
+  execute({ character, name, scene }: StateMachineBokoblinOptions) {
+    if (character.health.isDead()) {
+      this.stateMachine.transition('dead');
+      return;
+    }
+
     if (character.health.isDamaged()) {
       character.setSwingTarget(null);
       this.stateMachine.transition('damage');
@@ -97,8 +102,8 @@ export class StrikeState extends State<StateMachineOptions> {
   }
 }
 
-export class DamageState extends State<StateMachineOptions> {
-  enter({ character, scene, name }: StateMachineOptions) {
+export class DamageState extends State<StateMachineBokoblinOptions> {
+  enter({ character, scene, name }: StateMachineBokoblinOptions) {
     character.anims.play(`${name}_idle_${character.direction.value}`, true);
 
     scene.time.delayedCall(500, () => {
@@ -106,5 +111,3 @@ export class DamageState extends State<StateMachineOptions> {
     });
   }
 }
-
-export class DeadState extends State<StateMachineOptions> {}

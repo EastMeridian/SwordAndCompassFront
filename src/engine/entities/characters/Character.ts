@@ -7,4 +7,6 @@ export default abstract class Character extends Phaser.Physics.Arcade.Sprite {
   abstract direction: DirectionComponent;
 
   abstract health: HealthComponent;
+
+  abstract speed: number;
 }

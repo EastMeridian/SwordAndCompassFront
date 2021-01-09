@@ -23,12 +23,14 @@ export class StateMachine<T> {
   }
 
   step() {
-    if (this.state === null) {
-      this.state = this.initialState;
-      this.stateStore[this.state].enter(this.stateOptions);
-    }
+    if (!this.deleted) {
+      if (this.state === null) {
+        this.state = this.initialState;
+        this.stateStore[this.state].enter(this.stateOptions);
+      }
 
-    this.stateStore[this.state]?.execute?.(this.stateOptions);
+      this.stateStore[this.state]?.execute?.(this.stateOptions);
+    }
   }
 
   public transition(nextState: string) {
@@ -36,6 +38,10 @@ export class StateMachine<T> {
       this.state = nextState;
       this.stateStore[this.state]?.enter(this.stateOptions);
     }
+  }
+
+  getState() {
+    return this.state;
   }
 
   destroy() {

@@ -8,10 +8,11 @@ import Chest from 'src/engine/entities/objects/Chest';
 import GroundSpikes from 'src/engine/entities/objects/GroundSpike';
 import TorchLight from 'src/engine/entities/objects/TorchLight';
 import Arrow from 'src/engine/entities/spells/Arrow';
-import { createPlayerAnimation } from 'src/engine/animations/createPlayerAnimation';
+import { createForesterAnimation } from 'src/engine/animations/createPlayerAnimation';
 import {
   createBokoblinAnimation,
   createGhostAnimation,
+  createOgreAnimations,
   createSkeletonAnimation,
 } from 'src/engine/animations/createMonsterAnimation';
 import { createChestAnimation } from 'src/engine/animations/createChestAnimation';
@@ -19,18 +20,23 @@ import { createGroundSpikeAnimation } from 'src/engine/animations/createGroundSp
 import { createTorchLightAnimation } from 'src/engine/animations/createTorchLightAnimation';
 import { createWeapon1Animation } from 'src/engine/animations/createWeaponAnimation';
 import { sceneEvents } from 'src/engine/events/EventCenter';
-import { PLAYER_HEALTH_CHANGED } from 'src/engine/events/events';
+import { PLAYER_DEAD, PLAYER_HEALTH_CHANGED } from 'src/engine/events/events';
 import GroundSpike from 'src/engine/entities/objects/GroundSpike';
 import SwordSwing from 'src/engine/entities/spells/SwordSwing';
 import Bokoblin from 'src/engine/entities/characters/Bokoblin/Bokoblin';
 import DetectionCircle from 'src/engine/entities/others/DetectionCircle';
 import { correctTiledPointX, correctTiledPointY } from 'src/utils/misc';
 import { getOverlapPercentage } from 'src/utils/Collisions';
+import { createMonster, createMonsters, Monsters } from 'src/engine/system/factories/createMonster';
+import { PIPELINE } from 'src/constants';
 import { createBalloonAnimation } from '../animations/createBalloonAnimation';
 import Character from '../entities/characters/Character';
 import Skeleton from '../entities/characters/Skeleton/Skeleton';
 import WeaponSkill from '../components/skills/WeaponSkill';
 import ArrowSkill from '../components/skills/ArrowSkill';
+import { createRecoveryAnimation } from '../animations/createSpellAnimation';
+import HealSkill from '../components/skills/HealSkill';
+import { PlayerData } from '../data/entities';
 
 class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -41,24 +47,33 @@ class GameScene extends Phaser.Scene {
 
   private arrows!: Phaser.Physics.Arcade.Group;
 
-  private ghosts!: Phaser.Physics.Arcade.Group;
-
-  private skeletons!: Phaser.Physics.Arcade.Group;
-
-  private bokoblins!: Phaser.Physics.Arcade.Group;
+  public monsters?: Monsters;
 
   private torchLights!: Phaser.Physics.Arcade.StaticGroup;
-
-  private playerGhostCollider?: Phaser.Physics.Arcade.Collider;
 
   private smallLens!: Phaser.GameObjects.Arc;
 
   private bigLens!: Phaser.GameObjects.Arc;
 
-  private bokoblin!: Bokoblin;
+  private playerDead: boolean;
+
+  private playerData!: PlayerData;
 
   constructor() {
     super('game');
+    console.log('CONSTRUCTOR');
+    this.playerDead = false;
+  }
+
+  init({ texture, anims }: PlayerData) {
+    console.log('INIT');
+    this.playerData = { texture, anims };
+    this.player = this.add.player(
+      0, 0,
+      texture,
+      anims,
+    ).setPipeline(PIPELINE);
+    this.playerDead = false;
   }
 
   preload() {
@@ -78,6 +93,7 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    console.log('CREATE');
     this.sound.add('chest');
     this.sound.add('skill1');
     this.sound.add('bow');
@@ -85,7 +101,7 @@ class GameScene extends Phaser.Scene {
     this.sound.add('damage');
 
     this.scene.run('game-ui');
-    createPlayerAnimation(this);
+    createForesterAnimation(this);
     createGhostAnimation(this);
     createBokoblinAnimation(this);
     createChestAnimation(this);
@@ -94,7 +110,8 @@ class GameScene extends Phaser.Scene {
     createWeapon1Animation(this);
     createBalloonAnimation(this);
     createSkeletonAnimation(this);
-
+    createRecoveryAnimation(this);
+    createOgreAnimations(this);
     this.mapManager = new MapManager(this);
 
     this.cameras.main.setBounds(
@@ -123,26 +140,12 @@ class GameScene extends Phaser.Scene {
       classType: SwordSwing,
     });
 
-    const enemySwordSwings = this.physics.add.group({
-      classType: SwordSwing,
-    });
-
     const holesObjects = this.physics.add.staticGroup({
       classType: Phaser.GameObjects.Rectangle,
     });
 
-    const detectionCircles = this.physics.add.group({
-      classType: DetectionCircle,
-      createCallback: (o) => {
-        const circle = o as DetectionCircle;
-        circle
-          .setAlpha(0)
-          .setOrigin(0, 0);
-      },
-    });
-
     const chestsLayer = this.mapManager.map.getObjectLayer('chests');
-    const ghostLayer = this.mapManager.map.getObjectLayer('ghosts');
+    const monstersLayer = this.mapManager.map.getObjectLayer('monsters');
     const lightLayer = this.mapManager.map.getObjectLayer('lights');
     const spikeLayer = this.mapManager.map.getObjectLayer('spikes');
     const holesLayer = this.mapManager.map.getObjectLayer('holes');
@@ -150,12 +153,6 @@ class GameScene extends Phaser.Scene {
 
     holesLayer.objects.forEach((hole) => {
       if (hole) {
-        const slipRectangle = this.add.rectangle(
-          hole.x! + hole.width! * 0.5,
-          hole.y! + hole.height! * 0.5,
-          hole.width, hole.height,
-        );
-
         const rectangle = this.add.rectangle(
           hole.x! + hole.width! * 0.5,
           hole.y! + hole.height! * 0.5,
@@ -167,32 +164,14 @@ class GameScene extends Phaser.Scene {
     });
 
     chestsLayer.objects.forEach((chest) => {
-      chests.get(correctTiledPointX(chest), correctTiledPointY(chest), 'chest').setPipeline('Light2D');
+      chests.get(correctTiledPointX(chest), correctTiledPointY(chest), 'chest').setPipeline(PIPELINE);
     });
 
     spikeLayer.objects.forEach((spike) => {
       groundSpikes.get(correctTiledPointX(spike), correctTiledPointY(spike), 'chest');
     });
 
-    this.ghosts = this.physics.add.group({
-      classType: Ghost,
-      createCallback: (go) => {
-        const ghostGo = go as Ghost;
-        ghostGo.body.onCollide = true;
-      },
-    });
-
-    this.skeletons = this.physics.add.group({
-      classType: Skeleton,
-    });
-
-    this.bokoblins = this.physics.add.group({
-      classType: Bokoblin,
-    });
-
-    ghostLayer.objects.forEach((ghost) => {
-      this.ghosts.get(ghost.x, ghost.y, 'monster').setPipeline('Light2D');
-    });
+    this.monsters = createMonsters(monstersLayer.objects, this);
 
     this.arrows = this.physics.add.group({
       classType: Arrow,
@@ -202,32 +181,24 @@ class GameScene extends Phaser.Scene {
       classType: TorchLight,
     });
 
-    this.player = this.add.player(
-      (startPosition.objects[0].x || 0) + 24,
-      (startPosition.objects[0].y || 0) + 24,
-      'character',
-    ).setPipeline('Light2D');
-    this.player.setArrows(this.arrows);
-
-    this.bokoblin = this.bokoblins.get(700, 650, 'monster')
-      .setDetectionCircle(detectionCircles)
-      .setPipeline('Light2D');
-
-    this.bokoblin.skills
-      .add('weapon', new WeaponSkill(enemySwordSwings));
-    this.player.skills
+    this.player
+      .setPosition((startPosition.objects[0].x || 0) + 24, (startPosition.objects[0].y || 0) + 24)
+      .skills
+      .add('heal', new HealSkill(this))
       .add('arrow', new ArrowSkill(this.arrows))
       .add('weapon', new WeaponSkill(swordSwings));
-    this.physics.add.collider([this.player], this.mapManager.colliderLayer);/* , () => {
-      if (this.player.isJumping()) this.cameras.main.shake(300, 0.01);
-    } */
 
-    this.physics.add.collider([
-      this.ghosts,
-      this.bokoblins,
-      this.skeletons,
-    ],
-    holesObjects);
+    this.physics.add.collider([this.player], this.mapManager.colliderLayer);
+
+    const monsters = [
+      this.monsters.ghosts,
+      this.monsters.skeletons,
+      this.monsters.bokoblins,
+      this.monsters.ogres,
+    ];
+
+    this.physics.add.collider(monsters,
+      holesObjects);
 
     this.physics.add.overlap(
       this.player,
@@ -239,30 +210,26 @@ class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(
       this.player,
-      detectionCircles,
+      this.monsters.detectionCircles!,
       this.handlePlayerDetectionCollison,
       undefined,
       this,
     );
 
-    this.physics.add.collider([
-      this.ghosts,
-      this.bokoblins,
-      this.skeletons,
-    ], this.mapManager.colliderLayer);
+    this.physics.add.collider(monsters, this.mapManager.colliderLayer);
 
     this.physics.add.overlap(
       swordSwings,
-      [this.ghosts, this.skeletons, this.bokoblins],
+      monsters,
       this.handleSwordMonsterCollision,
       undefined,
       this,
     );
 
     this.physics.add.overlap(
-      enemySwordSwings,
+      this.monsters.swordSwings,
       this.player,
-      this.handleSwordPLayerCollision,
+      this.handleSwordPlayerCollision,
       undefined,
       this,
     );
@@ -284,15 +251,15 @@ class GameScene extends Phaser.Scene {
     );
 
     this.physics.add.collider(
-      this.arrows,
+      [this.arrows, this.monsters.arrows],
       this.mapManager.colliderLayer,
       this.handleArrowsWallCollision,
       undefined,
       this,
     );
 
-    this.playerGhostCollider = this.physics.add.collider(
-      [this.ghosts, this.bokoblins, this.skeletons],
+    this.physics.add.collider(
+      monsters,
       this.player,
       this.handlePlayerMonsterCollision,
       undefined,
@@ -300,9 +267,17 @@ class GameScene extends Phaser.Scene {
     );
 
     this.physics.add.overlap(
+      this.player,
+      this.monsters.arrows,
+      this.handleArrowsCollision,
+      undefined,
+      this,
+    );
+
+    this.physics.add.overlap(
+      monsters,
       this.arrows,
-      [this.ghosts, this.bokoblins, this.skeletons],
-      this.handleArrowsMonsterCollision,
+      this.handleArrowsCollision,
       undefined,
       this,
     );
@@ -314,7 +289,7 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.startFollow(this.player/* , true, 0.05, 0.05 */);
 
-    this.cameras.main.setZoom(1.2);
+    this.cameras.main.setZoom(1.4);
 
     this.lights.enable();
 
@@ -322,16 +297,29 @@ class GameScene extends Phaser.Scene {
       this.torchLights.get(light.x! + light.width! * 0.5, light.y! - light.height! * 0.5, 'lights');
     });
 
-    this.smallLens = this.add.circle(400, 400, 4, 0xffffff, 0.3).setDepth(2);
+    this.smallLens = this.add.circle(400, 400, 4, 0xffffff, 0.3).setDepth(5);
 
-    this.bigLens = this.add.circle(400, 300, 8, 0xffffff, 0.4).setDepth(2);
+    this.bigLens = this.add.circle(400, 300, 8, 0xffffff, 0.4).setDepth(5);
 
     this.sound.volume = 0.01;
 
     this.cameras.main.fadeIn(1500);
+
+    sceneEvents.on(PLAYER_DEAD, () => {
+      this.cameras.main.shake(300, 0.01);
+      /* this.cameras.main.fadeOut(1500); */
+      this.scene.stop('game-ui');
+      this.time.delayedCall(1500, () => {
+        this.playerDead = true;
+      });
+    });
   }
 
   update(time: number, delta: number) {
+    if (this.playerDead) {
+      this.scene.start('start');
+      return;
+    }
     const pointer = this.input.mousePointer;
     if (this.player) {
       this.player.update(this.keys);
@@ -353,12 +341,10 @@ class GameScene extends Phaser.Scene {
         this.bigLens.setAlpha(0);
       }
     }
-
-    this.bokoblin?.update();
   }
 
   private handlePlayerHoleCollision(
-    _:Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const hole = obj2 as Phaser.GameObjects.Rectangle;
@@ -411,7 +397,6 @@ class GameScene extends Phaser.Scene {
         amount: 1,
         direction,
       });
-      sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
     }
   }
 
@@ -426,10 +411,11 @@ class GameScene extends Phaser.Scene {
   private handleArrowsWallCollision(
     obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
-    const arrow = obj1 as Phaser.Physics.Arcade.Image;
+    const arrow = obj1 as Arrow;
     arrow.setVelocity(0);
+    arrow.setOperating(false);
 
-    this.time.delayedCall(1000, () => {
+    this.time.delayedCall(500, () => {
       this.arrows.kill(arrow);
     });
   }
@@ -446,13 +432,12 @@ class GameScene extends Phaser.Scene {
 
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
     monster.health.handleDamage({
-      amount: 1,
+      amount: 1.5,
       direction,
     });
-    sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
   }
 
-  private handleSwordPLayerCollision(
+  private handleSwordPlayerCollision(
     obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const sword = obj1 as SwordSwing;
@@ -463,31 +448,35 @@ class GameScene extends Phaser.Scene {
 
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
     this.player.health.handleDamage({
-      amount: this.player.damage.amount,
+      amount: 2,
       direction,
     });
-    sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
   }
 
-  private handleArrowsMonsterCollision(
+  private handleArrowsCollision(
     obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
-    const monster = obj2 as Character;
-    this.sound.get('monster').play();
+    const arrow = obj2 as Arrow;
+    const character = obj1 as Character;
 
-    const dx = monster.x - this.player.x;
-    const dy = monster.y - this.player.y;
+    if (arrow.isOperating()) {
+      const dx = character.x - arrow.x;
+      const dy = character.y - arrow.y;
 
-    const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
-    monster.health.handleDamage({
-      amount: this.player.damage.amount,
-      direction,
-    });
+      const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
+      character.health.handleDamage({
+        amount: arrow.damage,
+        direction,
+      });
 
-    this.time.delayedCall(1000, () => {
-      this.arrows.kill(obj1);
-    });
+      this.time.delayedCall(1000, () => {
+        this.arrows.kill(arrow);
+      });
+
+      const bokoblin = character as Bokoblin;
+      bokoblin.detectPlayer?.(this.player);
+    }
   }
 
   private handlePlayerMonsterCollision(
@@ -497,17 +486,13 @@ class GameScene extends Phaser.Scene {
     const monster = obj2 as Ghost;
     const dx = this.player.x - monster.x;
     const dy = this.player.y - monster.y;
-
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
-
+    const magnetude = monster.body.velocity.length();
+    console.log(magnetude, ' : ', Phaser.Math.Snap.To(magnetude / 100, 1));
     this.player.health.handleDamage({
-      amount: 1,
+      amount: Phaser.Math.Snap.To((magnetude / 100) || 1, 1),
       direction,
     });
-
-    sceneEvents.emit(PLAYER_HEALTH_CHANGED, this.player.health.value);
-
-    if (this.player.health.value <= 0) this.playerGhostCollider?.destroy();
   }
 }
 

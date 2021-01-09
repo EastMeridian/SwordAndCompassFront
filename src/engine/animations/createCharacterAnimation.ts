@@ -7,13 +7,18 @@ interface Options {
   texture: string,
   frameRate?: number,
   start: number,
+  damageTexture?: string,
+  damageFrame?: number,
 }
+
 export const createCharacterAnimation = ({
   scene,
   name,
   texture,
   start,
   frameRate = 8,
+  damageTexture,
+  damageFrame,
 }: Options) => {
   scene.anims.create({
     key: getDirectionalName(`${name}_walk`, Direction.DOWN),
@@ -65,5 +70,35 @@ export const createCharacterAnimation = ({
   scene.anims.create({
     key: getDirectionalName(`${name}_idle`, Direction.UP),
     frames: [{ key: texture, frame: start + 37 }],
+  });
+
+  if (damageFrame && damageTexture) {
+    scene.anims.create({
+      key: `${name}_dead`,
+      frames: [{ key: damageTexture, frame: damageFrame }],
+    });
+  }
+};
+
+export const createBossAnimation = ({
+  scene,
+  name,
+  texture,
+  start,
+  frameRate = 8,
+  damageTexture,
+  damageFrame,
+}: Options) => {
+  scene.anims.create({
+    key: `${name}_walk`,
+    frames: scene.anims.generateFrameNumbers(texture, { start, end: start + 2 }),
+    frameRate,
+    repeat: -1,
+    yoyo: true,
+  });
+
+  scene.anims.create({
+    key: `${name}_idle`,
+    frames: [{ key: texture, frame: start + 1 }],
   });
 };

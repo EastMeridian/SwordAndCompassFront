@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 import { Direction, getDirectionFromOrientation } from 'src/utils/Direction';
 import { Damage } from 'src/utils/Damage';
 import { sceneEvents } from 'src/engine/events/EventCenter';
-import { PLAYER_COINS_CHANGED, PLAYER_ENERGY_CHANGED } from 'src/engine/events/events';
+import {
+  PLAYER_COINS_CHANGED, PLAYER_DEAD, PLAYER_ENERGY_CHANGED, PLAYER_HEALTH_CHANGED,
+} from 'src/engine/events/events';
 import { StateMachine, State } from 'src/engine/system/StateMachine';
 import {
   Orders,
@@ -34,7 +36,7 @@ declare global {
       player(x: number,
         y: number,
         texture: string,
-        frame?: string | number
+        anims: string
       ): Player
 
       swordSwing(x: number,
@@ -89,20 +91,30 @@ class Player extends Character {
 
   private jumping = false;
 
+  public speed = 200;
+
   skills: SkillsComponent;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, frame?: string | number) {
-    super(scene, x, y, texture, frame);
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, anims: string) {
+    super(scene, x, y, texture);
 
     this.direction = new DirectionComponent(Direction.DOWN);
-    this.health = new HealthComponent(scene, this, 5);
+    this.health = new HealthComponent({
+      scene,
+      character: this,
+      health: 5,
+      onChange: (health: number) => {
+        sceneEvents.emit(PLAYER_HEALTH_CHANGED, { health, maximum: this.health.maximum });
+      },
+      onDie: () => {
+        sceneEvents.emit(PLAYER_DEAD);
+      },
+    });
     this.skills = new SkillsComponent(this);
 
     scene.input.on('pointerdown', function (this: Player) {
       this.orders[Order.ACTION_ONE] = true;
     }, this);
-
-    this.anims.play('walk_down');
 
     this.depth = 1;
 
@@ -126,7 +138,7 @@ class Player extends Character {
       damage: new DamageState(),
       dead: new DeadState(),
       falling: new FallingState(),
-    }, { character: this, scene, name: 'player' });
+    }, { character: this, scene, name: anims });
 
     this.pointer = scene.input.mousePointer;
   }
@@ -174,7 +186,7 @@ class Player extends Character {
     super.preUpdate(time, delta);
   }
 
-  jump(onComplete?: () => void) {
+  jump(onComplete ?: () => void) {
     this.health.setDamaged(HealthState.DAMAGE);
     const JUMP_COLOR = 0xff88ff;
     const shadows: Phaser.GameObjects.Image[] = [];
@@ -222,7 +234,7 @@ class Player extends Character {
       },
       onUpdate: () => {
         shadows.push(this.scene.add
-          .image(this.x, this.y, 'character', this.anims.currentFrame.textureFrame)
+          .image(this.x, this.y, this.texture, this.anims.currentFrame.textureFrame)
           .setScale(this.scale)
           .setAlpha(0.2)
           .setRotation(this.rotation)
@@ -241,7 +253,7 @@ class Player extends Character {
     }
 
     if (Phaser.Input.Keyboard.JustDown(keys.A)) {
-      this.skills.setCurrent(this.skills.current === 'arrow' ? 'weapon' : 'arrow');
+      this.skills.setNext();
     }
 
     this.stateMachine.step();
@@ -253,7 +265,7 @@ class Player extends Character {
 
   destroy() {
     this.energyEvent.destroy();
-
+    this.stateMachine.destroy();
     super.destroy();
   }
 }
@@ -263,9 +275,9 @@ Phaser.GameObjects.GameObjectFactory.register('player', function (
   x: number,
   y: number,
   texture: string,
-  frame?: string | number,
+  anims: string,
 ) {
-  const sprite = new Player(this.scene, x, y, texture, frame).setScale(1.6);
+  const sprite = new Player(this.scene, x, y, texture, anims).setScale(1.6);
 
   this.displayList.add(sprite);
   this.updateList.add(sprite);
