@@ -114,7 +114,6 @@ class Ogre extends Character {
     if (gameObject !== this) return;
     if (this.stateMachine.getState() !== 'idle') {
       this.stateMachine.transition('idle');
-      console.log('OGRE COLLISIOn IDLE');
     }
   }
 
