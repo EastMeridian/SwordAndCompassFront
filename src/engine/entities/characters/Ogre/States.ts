@@ -36,7 +36,6 @@ export class ChargeState extends State<StateMachineOptions> {
   enter({ character, scene, name }: StateMachineOptions) {
     character.setVelocity(0);
     character.anims.play(`${name}_idle`, true);
-    console.log('EUUUUU BALLON');
     character.balloon?.setAlpha(1)
       .play('idea_balloon')
       .on('animationcomplete', () => {

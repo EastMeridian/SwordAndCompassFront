@@ -61,12 +61,11 @@ class GameScene extends Phaser.Scene {
 
   constructor() {
     super('game');
-    console.log('CONSTRUCTOR');
+
     this.playerDead = false;
   }
 
   init({ texture, anims }: PlayerData) {
-    console.log('INIT');
     this.playerData = { texture, anims };
     this.player = this.add.player(
       0, 0,
@@ -93,7 +92,6 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    console.log('CREATE');
     this.sound.add('chest');
     this.sound.add('skill1');
     this.sound.add('bow');
@@ -488,7 +486,6 @@ class GameScene extends Phaser.Scene {
     const dy = this.player.y - monster.y;
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
     const magnetude = monster.body.velocity.length();
-    console.log(magnetude, ' : ', Phaser.Math.Snap.To(magnetude / 100, 1));
     this.player.health.handleDamage({
       amount: Phaser.Math.Snap.To((magnetude / 100) || 1, 1),
       direction,

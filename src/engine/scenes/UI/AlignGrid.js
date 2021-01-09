@@ -2,7 +2,6 @@
 export default class AlignGrid {
   constructor(config) {
     if (!config.scene) {
-      console.log('missing scene!');
       return;
     }
     if (!config.rows) {

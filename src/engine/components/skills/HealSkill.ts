@@ -22,7 +22,6 @@ export default class HealSkill implements Skill {
     );
     character.setTint(0x2ecc71);
     this.heal.play('recovery').on('animationcomplete', () => {
-      console.log('ANIMATION COMPLETE');
       character.clearTint();
       character.health.add(2);
       this.heal?.destroy();
