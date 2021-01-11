@@ -398,7 +398,6 @@ class GameScene extends Phaser.Scene {
         this.player.body.velocity.x += slipVector.x;
         this.player.body.velocity.y += slipVector.y;
       } else if (!this.player.isFalling()) {
-        this.sound.get('fall').play();
         this.player.setFalling(true);
       }
     }
