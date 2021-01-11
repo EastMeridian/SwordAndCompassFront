@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import DirectionComponent from 'src/engine/components/DirectionComponent';
 import HealthComponent from 'src/engine/components/HealthComponent';
+import { InventoryComponent } from 'src/engine/components/InventoryComponent';
 
 export default abstract class Character extends Phaser.Physics.Arcade.Sprite {
   abstract direction: DirectionComponent;
@@ -9,4 +10,6 @@ export default abstract class Character extends Phaser.Physics.Arcade.Sprite {
   abstract health: HealthComponent;
 
   abstract speed: number;
+
+  inventory?: InventoryComponent;
 }

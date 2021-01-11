@@ -2,11 +2,16 @@ import Phaser from 'phaser';
 import SwordSwing from 'src/engine/entities/spells/SwordSwing';
 import Character from 'src/engine/entities/characters/Character';
 import { Skill } from './Skill';
+import { SkillData } from './SkillData';
 
 export default class WeaponSkill implements Skill {
   private weaponGroup: Phaser.Physics.Arcade.Group;
 
   private currentWeapon?: SwordSwing;
+
+  public data: SkillData = {
+    frame: 24,
+  };
 
   constructor(weaponGroup: Phaser.Physics.Arcade.Group) {
     this.weaponGroup = weaponGroup;

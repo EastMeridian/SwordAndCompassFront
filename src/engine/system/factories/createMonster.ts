@@ -1,18 +1,18 @@
 import Phaser from 'phaser';
 import WeaponSkill from 'src/engine/components/skills/WeaponSkill';
 import Bokoblin from 'src/engine/entities/characters/Bokoblin';
-import Ghost from 'src/engine/entities/characters/Ghost/Ghost';
 import Ogre from 'src/engine/entities/characters/Ogre';
 import Skeleton from 'src/engine/entities/characters/Skeleton/Skeleton';
 import DetectionCircle from 'src/engine/entities/others/DetectionCircle';
 import Arrow from 'src/engine/entities/spells/Arrow';
 import SwordSwing from 'src/engine/entities/spells/SwordSwing';
+import PrimitiveAnimal from 'src/engine/entities/characters/PrimitiveAnimal/PrimitiveAnimal';
 import { BOKOBLIN, createBokoblin } from './createBokoblin';
-import { GHOST, createGhost } from './createGhost';
+import { PRIMITIVE_ANIMAL, createPrimitiveAnimal } from './createPrimitiveAnimal';
 import { createOgre, OGRE } from './createOgre';
 
 export interface Monsters {
-  ghosts: Phaser.Physics.Arcade.Group;
+  primitiveAnimals: Phaser.Physics.Arcade.Group;
   skeletons: Phaser.Physics.Arcade.Group;
   bokoblins: Phaser.Physics.Arcade.Group;
   detectionCircles: Phaser.Physics.Arcade.Group;
@@ -32,8 +32,11 @@ export const createMonster = (
   }), {});
 
   switch (properties.type) {
-    case GHOST:
-      return createGhost(monster, properties, monsters);
+    case PRIMITIVE_ANIMAL:
+      return monsters.primitiveAnimals.add(
+        createPrimitiveAnimal(scene, monster, properties),
+        true,
+      );
     case BOKOBLIN:
       return monsters.bokoblins.add(
         createBokoblin(scene, monster, properties, monsters)!,
@@ -53,10 +56,10 @@ export const createMonsters = (
 ): Monsters => {
   const monsters: Monsters = {
 
-    ghosts: scene.physics.add.group({
-      classType: Ghost,
+    primitiveAnimals: scene.physics.add.group({
+      classType: PrimitiveAnimal,
       createCallback: (go) => {
-        const ghost = go as Ghost;
+        const ghost = go as PrimitiveAnimal;
         ghost.body.onCollide = true;
       },
     }),
@@ -67,6 +70,10 @@ export const createMonsters = (
 
     bokoblins: scene.physics.add.group({
       classType: Bokoblin,
+      createCallback: (go) => {
+        const bokoblin = go as Bokoblin;
+        bokoblin.setMass(0.1);
+      },
       runChildUpdate: true,
     }),
 
@@ -76,6 +83,7 @@ export const createMonsters = (
       createCallback: (go) => {
         const ogre = go as Ogre;
         ogre.body.onCollide = true;
+        ogre.setMass(0.1);
       },
     }),
 

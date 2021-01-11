@@ -5,7 +5,7 @@ class TorchLight extends Phaser.Physics.Arcade.Sprite {
     super(scene, x, y, texture);
 
     this.play('torch_light');
-    scene.lights.addLight(x, y, 500).setColor(0xffba56).setIntensity(2.8);
+    scene.lights.addLight(x, y + 15, 500).setColor(0xffba56).setIntensity(2.8);
   }
 }
 

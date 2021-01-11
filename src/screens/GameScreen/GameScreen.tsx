@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
-import { config } from 'src/engine';
+import { createGameConfig } from 'src/engine';
 import { reactBridgeEvents } from 'src/engine/events/EventCenter';
 import { GAME_LOADED } from 'src/engine/events/events';
-import { GameView, CanvasView } from './layout';
+import {
+  GameView, CanvasView, ActionBar, FullScreenButton,
+} from './layout';
 
 const GameScreen = () => {
   useEffect(() => {
-    const game = new Phaser.Game(config);
+    const game = new Phaser.Game(createGameConfig());
     return () => game.destroy(true, false);
   }, []);
 

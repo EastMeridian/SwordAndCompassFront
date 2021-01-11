@@ -155,6 +155,12 @@ export class DamageState extends State<StateMachineOptions> {
       this.stateMachine.transition('idle');
     });
   }
+
+  execute({ character }: StateMachineOptions) {
+    if (character.isFalling()) {
+      this.stateMachine.transition('falling');
+    }
+  }
 }
 
 export class FallingState extends State<StateMachineOptions> {

@@ -4,6 +4,7 @@ import WeaponSkill from 'src/engine/components/skills/WeaponSkill';
 import { BokoblinBowman, BokoblinSwordman } from 'src/engine/data/entities';
 import Bokoblin from 'src/engine/entities/characters/Bokoblin';
 import { PIPELINE } from 'src/constants';
+import { correctTiledPointX, correctTiledPointY } from 'src/utils/misc';
 import { Monsters } from './createMonster';
 
 export const BOKOBLIN = 'bokoblin';
@@ -17,7 +18,7 @@ export const createBokoblin = (
   let monster;
 
   if (properties.skill === 'weapon') {
-    monster = new Bokoblin(scene, object.x!, object.y!, 'monster', BokoblinSwordman);
+    monster = new Bokoblin(scene, correctTiledPointX(object), correctTiledPointY(object), 'monster', BokoblinSwordman);
     const { target, hit } = BokoblinSwordman.detection;
 
     monster.setDetectionCircle(monsters.detectionCircles, target, hit)
@@ -25,7 +26,7 @@ export const createBokoblin = (
 
     monster.skills.setCurrent(properties.skill);
   } else if (properties.skill === 'arrow') {
-    monster = new Bokoblin(scene, object.x!, object.y!, 'monster', BokoblinBowman);
+    monster = new Bokoblin(scene, correctTiledPointX(object), correctTiledPointY(object), 'monster', BokoblinBowman);
     const { target, hit } = BokoblinBowman.detection;
 
     monster.setDetectionCircle(monsters.detectionCircles, target, hit)
@@ -35,6 +36,5 @@ export const createBokoblin = (
   if (!monster) return null;
   monster.setPipeline(PIPELINE)
     .skills.setCurrent(properties.skill);
-
   return monster;
 };

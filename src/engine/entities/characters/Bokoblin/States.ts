@@ -79,8 +79,10 @@ export class StrikeState extends State<StateMachineBokoblinOptions> {
         if (scene) {
           if (!character.health.isDead()) {
             character.skills.useCurrent(orientation, () => {
-              character.setSwingTarget(null);
-              this.stateMachine.transition('idle');
+              if (!character.health.isDead()) {
+                character.setSwingTarget(null);
+                this.stateMachine.transition('idle');
+              }
             });
             character.anims.play(`${name}_idle_${character.direction.value}`, true);
           }

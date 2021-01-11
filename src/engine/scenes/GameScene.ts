@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 import Phaser from 'phaser';
 import MapManager from 'src/engine/system/MapManager';
-import Ghost from 'src/engine/entities/characters/Ghost/Ghost';
+import Ghost from 'src/engine/entities/characters/PrimitiveAnimal/PrimitiveAnimal';
 import 'src/engine/entities/characters/Player/Player';
 import Player from 'src/engine/entities/characters/Player/Player';
 import Chest from 'src/engine/entities/objects/Chest';
@@ -10,17 +10,20 @@ import TorchLight from 'src/engine/entities/objects/TorchLight';
 import Arrow from 'src/engine/entities/spells/Arrow';
 import { createForesterAnimation } from 'src/engine/animations/createPlayerAnimation';
 import {
+  createBatAnimation,
   createBokoblinAnimation,
   createGhostAnimation,
   createOgreAnimations,
+  createScorpionAnimation,
   createSkeletonAnimation,
+  createSpiderAnimation,
 } from 'src/engine/animations/createMonsterAnimation';
 import { createChestAnimation } from 'src/engine/animations/createChestAnimation';
 import { createGroundSpikeAnimation } from 'src/engine/animations/createGroundSpikeAnimation';
 import { createTorchLightAnimation } from 'src/engine/animations/createTorchLightAnimation';
-import { createWeapon1Animation } from 'src/engine/animations/createWeaponAnimation';
+import { createweaponAnimation } from 'src/engine/animations/createWeaponAnimation';
 import { sceneEvents } from 'src/engine/events/EventCenter';
-import { PLAYER_DEAD, PLAYER_HEALTH_CHANGED } from 'src/engine/events/events';
+import { PLAYER_DEAD } from 'src/engine/events/events';
 import GroundSpike from 'src/engine/entities/objects/GroundSpike';
 import SwordSwing from 'src/engine/entities/spells/SwordSwing';
 import Bokoblin from 'src/engine/entities/characters/Bokoblin/Bokoblin';
@@ -37,6 +40,7 @@ import ArrowSkill from '../components/skills/ArrowSkill';
 import { createRecoveryAnimation } from '../animations/createSpellAnimation';
 import HealSkill from '../components/skills/HealSkill';
 import { PlayerData } from '../data/entities';
+import MusicManager from '../system/MusicManager';
 
 class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -92,24 +96,47 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.sound.add('chest');
-    this.sound.add('skill1');
-    this.sound.add('bow');
-    this.sound.add('monster');
-    this.sound.add('damage');
+    this.sound.add('chest', {
+      volume: 0.2,
+    });
+    this.sound.add('skill1', {
+      volume: 0.2,
+    });
+    this.sound.add('bow', {
+      volume: 0.2,
+    });
+    this.sound.add('monster', {
+      volume: 0.1,
+    });
+    this.sound.add('damage2', {
+      volume: 0.1,
+    });
 
-    this.scene.run('game-ui');
+    this.sound.add('sword', {
+      volume: 0.1,
+    });
+
+    this.sound.add('heal', {
+      volume: 0.2,
+    });
+
+    this.sound.add('dongeon_music');
+    MusicManager.setScene(this);
+
     createForesterAnimation(this);
     createGhostAnimation(this);
     createBokoblinAnimation(this);
     createChestAnimation(this);
     createTorchLightAnimation(this);
     createGroundSpikeAnimation(this);
-    createWeapon1Animation(this);
+    createweaponAnimation(this);
     createBalloonAnimation(this);
     createSkeletonAnimation(this);
     createRecoveryAnimation(this);
     createOgreAnimations(this);
+    createBatAnimation(this);
+    createScorpionAnimation(this);
+    createSpiderAnimation(this);
     this.mapManager = new MapManager(this);
 
     this.cameras.main.setBounds(
@@ -182,14 +209,14 @@ class GameScene extends Phaser.Scene {
     this.player
       .setPosition((startPosition.objects[0].x || 0) + 24, (startPosition.objects[0].y || 0) + 24)
       .skills
-      .add('heal', new HealSkill(this))
       .add('arrow', new ArrowSkill(this.arrows))
+      .add('heal', new HealSkill(this))
       .add('weapon', new WeaponSkill(swordSwings));
 
     this.physics.add.collider([this.player], this.mapManager.colliderLayer);
 
     const monsters = [
-      this.monsters.ghosts,
+      this.monsters.primitiveAnimals,
       this.monsters.skeletons,
       this.monsters.bokoblins,
       this.monsters.ogres,
@@ -287,7 +314,7 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.startFollow(this.player/* , true, 0.05, 0.05 */);
 
-    this.cameras.main.setZoom(1.4);
+    this.cameras.main.setZoom(1.2);
 
     this.lights.enable();
 
@@ -299,9 +326,15 @@ class GameScene extends Phaser.Scene {
 
     this.bigLens = this.add.circle(400, 300, 8, 0xffffff, 0.4).setDepth(5);
 
-    this.sound.volume = 0.01;
-
+    this.sound.volume = 1;
+    MusicManager.play('dongeon_music');
+    MusicManager.fadeIn(500);
     this.cameras.main.fadeIn(1500);
+
+    this.scene.run('game-ui', {
+      data: this.player.skills.getCurrentData(),
+      stackables: this.player.inventory.list(),
+    });
 
     sceneEvents.on(PLAYER_DEAD, () => {
       this.cameras.main.shake(300, 0.01);
@@ -364,7 +397,8 @@ class GameScene extends Phaser.Scene {
 
         this.player.body.velocity.x += slipVector.x;
         this.player.body.velocity.y += slipVector.y;
-      } else {
+      } else if (!this.player.isFalling()) {
+        this.sound.get('fall').play();
         this.player.setFalling(true);
       }
     }
@@ -415,6 +449,7 @@ class GameScene extends Phaser.Scene {
 
     this.time.delayedCall(500, () => {
       this.arrows.kill(arrow);
+      this.monsters?.arrows.kill(arrow);
     });
   }
 
@@ -423,26 +458,26 @@ class GameScene extends Phaser.Scene {
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const monster = obj2 as Character;
-    this.sound.get('monster').play();
+    if (!monster.health.isDamaged()) {
+      this.sound.get('monster').play();
+      const dx = monster.x - this.player.x;
+      const dy = monster.y - this.player.y;
 
-    const dx = monster.x - this.player.x;
-    const dy = monster.y - this.player.y;
-
-    const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
-    monster.health.handleDamage({
-      amount: 1.5,
-      direction,
-    });
+      const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
+      monster.health.handleDamage({
+        amount: 1.5,
+        direction,
+      });
+    }
   }
 
   private handleSwordPlayerCollision(
-    obj1: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    sword: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
-    const sword = obj1 as SwordSwing;
     this.sound.get('monster').play();
 
-    const dx = obj1.body.x - this.player.x;
-    const dy = obj1.body.y - this.player.y;
+    const dx = sword.body.x - this.player.x;
+    const dy = sword.body.y - this.player.y;
 
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
     this.player.health.handleDamage({
@@ -482,14 +517,17 @@ class GameScene extends Phaser.Scene {
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const monster = obj2 as Ghost;
-    const dx = this.player.x - monster.x;
-    const dy = this.player.y - monster.y;
-    const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
-    const magnetude = monster.body.velocity.length();
-    this.player.health.handleDamage({
-      amount: Phaser.Math.Snap.To((magnetude / 100) || 1, 1),
-      direction,
-    });
+    if (!this.player.health.isDamaged()) {
+      this.sound.get('damage2').play();
+      const dx = this.player.x - monster.x;
+      const dy = this.player.y - monster.y;
+      const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
+      const magnetude = monster.body.velocity.length();
+      this.player.health.handleDamage({
+        amount: Phaser.Math.Snap.To((magnetude / 100) || 1, 1),
+        direction,
+      });
+    }
   }
 }
 

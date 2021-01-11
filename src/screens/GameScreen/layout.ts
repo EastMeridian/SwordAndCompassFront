@@ -5,10 +5,14 @@ export const GameView = styled.div`
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
+
 `;
 
 export const CanvasView = styled.div`
+`;
 
+export const ActionBar = styled.div`
+`;
+
+export const FullScreenButton = styled.img`
 `;

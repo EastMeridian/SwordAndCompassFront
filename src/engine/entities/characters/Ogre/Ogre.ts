@@ -39,7 +39,6 @@ class Ogre extends Character {
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
-
     this.direction = new DirectionComponent(Direction.DOWN);
     this.health = new HealthComponent({ scene, health: 10, character: this });
 
@@ -112,8 +111,9 @@ class Ogre extends Character {
 
   handleTileCollision(gameObject: Phaser.GameObjects.GameObject) {
     if (gameObject !== this) return;
-    if (this.stateMachine.getState() !== 'idle') {
+    if (this.stateMachine.getState() === 'charge') {
       this.stateMachine.transition('idle');
+      this.scene.cameras.main.shake(300, 0.01);
     }
   }
 

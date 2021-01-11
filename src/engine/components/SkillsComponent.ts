@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import Character from 'src/engine/entities/characters/Character';
 import { Skill } from 'src/engine/components/skills/Skill';
+import { SkillData } from './skills/SkillData';
+import { InventoryComponent } from './InventoryComponent';
 
 export default class SkillsComponent {
   private owner: Character;
@@ -13,16 +15,30 @@ export default class SkillsComponent {
 
   private index: number;
 
-  constructor(owner: Character, skills: Record<string, Skill> = {}) {
+  private onChange?: (data: SkillData) => void;
+
+  constructor(
+    owner: Character,
+    onChange?: (data: SkillData) => void,
+  ) {
     this.owner = owner;
-    this.skills = skills;
+    this.skills = {};
     this.references = [];
     this.index = 0;
+    this.onChange = onChange;
+  }
+
+  getCurrentData() {
+    if (this.current) {
+      return this.skills[this.current].data;
+    }
+    return {};
   }
 
   add(name: string, skill: Skill) {
     this.skills[name] = skill;
     this.references.push(name);
+    this.index++;
     this.current = name;
     return this;
   }
@@ -43,6 +59,8 @@ export default class SkillsComponent {
 
   setCurrent(name: string) {
     this.current = name;
+    this.index = this.references.findIndex((ref) => ref === name);
+    this.onChange?.(this.skills[this.current].data);
   }
 
   setNext() {
@@ -52,6 +70,7 @@ export default class SkillsComponent {
     }
 
     this.current = this.references[this.index];
+    this.onChange?.(this.skills[this.current].data);
   }
 
   update() {

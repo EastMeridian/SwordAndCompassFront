@@ -10,6 +10,27 @@ export const createGhostAnimation = (scene: Phaser.Scene) => createCharacterAnim
   damageFrame: 6,
 });
 
+export const createBatAnimation = (scene: Phaser.Scene) => createCharacterAnimation({
+  scene,
+  name: 'bat',
+  texture: 'monster_2',
+  start: 0,
+});
+
+export const createScorpionAnimation = (scene: Phaser.Scene) => createCharacterAnimation({
+  scene,
+  name: 'scorpion',
+  texture: 'monster_2',
+  start: 54,
+});
+
+export const createSpiderAnimation = (scene: Phaser.Scene) => createCharacterAnimation({
+  scene,
+  name: 'spider',
+  texture: 'monster_2',
+  start: 57,
+});
+
 export const createBokoblinAnimation = (scene: Phaser.Scene) => createCharacterAnimation({
   scene,
   name: 'bokoblin',

@@ -5,11 +5,20 @@ import Heal from 'src/engine/entities/spells/Heal';
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import { PLAYER_HEALTH_CHANGED } from 'src/engine/events/events';
 import { Skill } from './Skill';
+import { SkillData } from './SkillData';
 
 export default class HealSkill implements Skill {
   private scene: Phaser.Scene;
 
   private heal?: Heal;
+
+  public data: SkillData = {
+    texture: 'recovery1',
+    frame: 16,
+    scale: 0.4,
+    originX: 1,
+    originY: 2.2,
+  };
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;

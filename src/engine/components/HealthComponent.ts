@@ -92,9 +92,6 @@ export default class HealthComponent {
       this._health = 0;
       this.onChange?.(this._health);
 
-      this.healthState = HealthState.DEAD;
-      this.character.setTint(0xff0000);
-
       this.scene.tweens.add({
         targets: this.character.body.velocity,
         duration: 150,
@@ -108,6 +105,8 @@ export default class HealthComponent {
           this.onDie?.();
         },
       });
+      this.healthState = HealthState.DEAD;
+      this.character.setTint(0xff0000);
       /*
       this.character.setTint(0xff0000);
 

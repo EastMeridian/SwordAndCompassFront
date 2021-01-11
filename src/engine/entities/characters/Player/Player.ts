@@ -3,7 +3,12 @@ import { Direction, getDirectionFromOrientation } from 'src/utils/Direction';
 import { Damage } from 'src/utils/Damage';
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import {
-  PLAYER_COINS_CHANGED, PLAYER_DEAD, PLAYER_ENERGY_CHANGED, PLAYER_HEALTH_CHANGED,
+  PLAYER_CHANGED_SPELL,
+  PLAYER_COINS_CHANGED,
+  PLAYER_DEAD,
+  PLAYER_ENERGY_CHANGED,
+  PLAYER_HEALTH_CHANGED,
+  PLAYER_STACKABLE_CHANGED,
 } from 'src/engine/events/events';
 import { StateMachine, State } from 'src/engine/system/StateMachine';
 import {
@@ -15,6 +20,9 @@ import {
 import HealthComponent, { HealthState } from 'src/engine/components/HealthComponent';
 import DirectionComponent from 'src/engine/components/DirectionComponent';
 import SkillsComponent from 'src/engine/components/SkillsComponent';
+import { SkillData } from 'src/engine/components/skills/SkillData';
+import { InventoryComponent } from 'src/engine/components/InventoryComponent';
+import { Stackable } from 'src/engine/components/Stackable';
 import Chest from '../../objects/Chest';
 import SwordSwing from '../../spells/SwordSwing';
 import {
@@ -28,25 +36,6 @@ import {
   DeadState,
 } from './States';
 import Character from '../Character';
-
-declare global {
-  namespace Phaser.GameObjects {
-    interface GameObjectFactory {
-
-      player(x: number,
-        y: number,
-        texture: string,
-        anims: string
-      ): Player
-
-      swordSwing(x: number,
-        y: number,
-        texture: string,
-        frame?: string | number
-      ): SwordSwing
-    }
-  }
-}
 
 class Player extends Character {
   public energy = 100;
@@ -69,8 +58,6 @@ class Player extends Character {
     return this._damage;
   }
 
-  private _coins = 100;
-
   private arrows?: Phaser.Physics.Arcade.Group;
 
   private activeChest?: Chest;
@@ -86,6 +73,8 @@ class Player extends Character {
   public health: HealthComponent;
 
   public direction: DirectionComponent;
+
+  public inventory: InventoryComponent;
 
   private falling = false;
 
@@ -110,7 +99,25 @@ class Player extends Character {
         sceneEvents.emit(PLAYER_DEAD);
       },
     });
-    this.skills = new SkillsComponent(this);
+
+    this.inventory = new InventoryComponent({
+      arrow: {
+        name: 'arrow',
+        amount: 10,
+        frame: 106,
+      },
+      gold: {
+        name: 'gold',
+        amount: 0,
+        frame: 220,
+      },
+    }, (item: Stackable) => {
+      sceneEvents.emit(PLAYER_STACKABLE_CHANGED, item);
+    });
+
+    this.skills = new SkillsComponent(this, (data: SkillData) => {
+      sceneEvents.emit(PLAYER_CHANGED_SPELL, data);
+    });
 
     scene.input.on('pointerdown', function (this: Player) {
       this.orders[Order.ACTION_ONE] = true;
@@ -186,7 +193,7 @@ class Player extends Character {
     super.preUpdate(time, delta);
   }
 
-  jump(onComplete ?: () => void) {
+  jump(onComplete?: () => void) {
     this.health.setDamaged(HealthState.DAMAGE);
     const JUMP_COLOR = 0xff88ff;
     const shadows: Phaser.GameObjects.Image[] = [];
@@ -207,7 +214,7 @@ class Player extends Character {
 
     const jumpDirection = direction !== Direction.LEFT ? 1 : -1;
 
-    const speed = 550;
+    const speed = 600;
 
     this.scene.sound.get('skill1').play();
     this.scene.tweens.add({
@@ -246,9 +253,8 @@ class Player extends Character {
   update(keys: any) {
     if (Phaser.Input.Keyboard.JustDown(keys.E)) {
       if (this.activeChest) {
-        const coins = this.activeChest.open();
-        this._coins += coins;
-        sceneEvents.emit(PLAYER_COINS_CHANGED, this._coins);
+        const items = this.activeChest.open();
+        items.forEach(({ name, amount }) => this.inventory.provide(name, amount));
       }
     }
 

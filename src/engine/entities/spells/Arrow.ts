@@ -15,7 +15,7 @@ class Arrow extends Phaser.Physics.Arcade.Image {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'arrow');
-    this.sprite = scene.add.sprite(x, y, 'weapon1');
+    this.sprite = scene.add.sprite(x, y, 'weapon_1');
   }
 
   use(
@@ -75,11 +75,6 @@ class Arrow extends Phaser.Physics.Arcade.Image {
 
   setOperating(operating: boolean) {
     this.operating = operating;
-  }
-
-  destroy() {
-    super.destroy();
-    this.sprite?.destroy();
   }
 }
 

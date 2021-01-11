@@ -35,7 +35,9 @@ export class IdleState extends State<StateMachineOptions> {
 export class ChargeState extends State<StateMachineOptions> {
   enter({ character, scene, name }: StateMachineOptions) {
     character.setVelocity(0);
+
     character.anims.play(`${name}_idle`, true);
+
     character.balloon?.setAlpha(1)
       .play('idea_balloon')
       .on('animationcomplete', () => {
@@ -62,18 +64,30 @@ export class ChargeState extends State<StateMachineOptions> {
             ease: Phaser.Math.Easing.Quadratic.Out,
             onComplete: () => {
               scene.time.delayedCall(1000, () => {
-                this.stateMachine.transition('follow');
+                if (this.stateMachine.getState() === 'charge') this.stateMachine.transition('follow');
               });
             },
           });
+        } else {
+          this.stateMachine.transition('idle');
         }
       });
   }
 }
 
 export class FollowState extends State<StateMachineOptions> {
+  private chargeCount = 0;
+
+  private getInterval() {
+    this.chargeCount++;
+    const start = 3000 - this.chargeCount * 200;
+
+    return Phaser.Math.Between(start, start + 500);
+  }
+
   enter({ character, scene }: StateMachineOptions) {
-    scene.time.delayedCall(Phaser.Math.Between(3000, 3500), () => {
+    const interval = this.getInterval();
+    scene.time.delayedCall(interval, () => {
       if (!character.health.isDead()) {
         this.stateMachine.transition('charge');
       }

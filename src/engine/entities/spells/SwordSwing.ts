@@ -14,7 +14,7 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 56, 56, 0xffffff);
 
-    this.sprite = scene.add.sprite(x, y, 'weapon1');
+    this.sprite = scene.add.sprite(x, y, 'weapon_1');
   }
 
   use(
@@ -22,6 +22,7 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
     character: Character,
     onComplete: () => void,
   ) {
+    this.scene.sound.get('sword').play();
     this.direction = direction.normalize().scale(64);
     const angle = this.direction.angle();
     this
@@ -33,8 +34,8 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
       .setFlipX(true)
       .setScale(1.4)
       .setPosition(
-        this.x + direction.x * SPRITE_RATIO * 10,
-        this.y + direction.y * SPRITE_RATIO * 10,
+        this.x + this.direction.x,
+        this.y + this.direction.y,
       )
       .setOrigin(0.5, 0.85)
       .setRotation(angle - ((-Math.PI) / 4))

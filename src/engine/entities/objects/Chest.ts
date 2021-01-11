@@ -8,10 +8,13 @@ class Chest extends Phaser.Physics.Arcade.Sprite {
   }
 
   open() {
-    if (this.anims.currentAnim.key !== 'chest_closed') return 0;
+    if (this.anims.currentAnim.key !== 'chest_closed') return [];
     this.scene.sound.get('chest').play();
     this.play('chest_open');
-    return Phaser.Math.Between(50, 200);
+    return [
+      { name: 'arrow', amount: Phaser.Math.Between(5, 15) },
+      { name: 'gold', amount: Phaser.Math.Between(10, 25) },
+    ];
   }
 }
 
