@@ -210,10 +210,15 @@ class GameScene extends Phaser.Scene {
 
     this.torchLights = this.physics.add.staticGroup({
       classType: TorchLight,
+      createCallback: (obj) => {
+        const torch = obj as TorchLight;
+        torch.setSize(28, 24);
+      },
     });
 
     this.player
       .setPosition((startPosition.objects[0].x || 0) + 24, (startPosition.objects[0].y || 0) + 24)
+      .setSize(30, 32)
       .skills
       .add('arrow', new ArrowSkill(this.arrows))
       .add('heal', new HealSkill(this))
@@ -540,8 +545,9 @@ class GameScene extends Phaser.Scene {
       const dy = this.player.y - monster.y;
       const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
       const magnetude = monster.body.velocity.length();
+      const snaped = Math.max(Phaser.Math.Snap.To((magnetude / 150), 1), 1);
       this.player.health.handleDamage({
-        amount: Phaser.Math.Snap.To((magnetude / 100) || 1, 1),
+        amount: snaped,
         direction,
       });
     }

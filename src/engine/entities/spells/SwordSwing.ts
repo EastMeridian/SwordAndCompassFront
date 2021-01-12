@@ -30,12 +30,11 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
       .setPosition(this.x + this.direction.x, this.y + this.direction.y);
 
     this.sprite
-      /* .setSize(48, 48) */
       .setFlipX(true)
       .setScale(1.4)
       .setPosition(
-        this.x + this.direction.x,
-        this.y + this.direction.y,
+        this.x * SPRITE_RATIO,
+        this.y * SPRITE_RATIO,
       )
       .setOrigin(0.5, 0.85)
       .setRotation(angle - ((-Math.PI) / 4))

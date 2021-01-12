@@ -49,7 +49,7 @@ class Arrow extends Phaser.Physics.Arcade.Image {
 
         this.setOperating(true);
         this
-          .setSize(64, 64)
+          .setSize(32, 32)
           .setActive(true)
           .setVisible(true)
           .setRotation(angle + 1.5707963)

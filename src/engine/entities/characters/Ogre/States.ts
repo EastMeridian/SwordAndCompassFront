@@ -121,11 +121,8 @@ export class FollowState extends State<StateMachineOptions> {
 export class DamageState extends State<StateMachineOptions> {
   enter({ character, scene, name }: StateMachineOptions) {
     character.anims.play(`${name}_idle`, true);
-    console.log('OGRE enter damage');
     scene.time.delayedCall(500, () => {
       if (this.stateMachine.state !== 'idle') {
-        console.log('OGRE damage to idle');
-
         this.stateMachine.transition('idle');
       }
     });
