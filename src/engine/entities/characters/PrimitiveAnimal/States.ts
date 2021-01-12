@@ -61,7 +61,7 @@ export class DeadState extends State<StateMachineOptions> {
       targets: character,
       alpha: 0,
       tint: 0x000000,
-      duration: 2000,
+      duration: 1500,
       ease: 'Sine.eastIn',
       onComplete: () => character?.destroy(),
     });
