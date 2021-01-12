@@ -26,7 +26,6 @@ export default class ArrowSkill implements Skill {
     const arrow = this.arrowGroup.get(character.x, character.y);
 
     if (!arrow) return;
-
     arrow.use(
       direction,
       character,

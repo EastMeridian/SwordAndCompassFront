@@ -42,7 +42,7 @@ export const BokoblinSwordman = {
   health: 4,
   detection: {
     target: 250,
-    hit: 100,
+    hit: 90,
   },
   speed: 150,
   cooldown: 750,

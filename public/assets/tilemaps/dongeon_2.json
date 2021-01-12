@@ -40,16 +40,16 @@
          "name":"start",
          "objects":[
                 {
-                 "gid":433,
+                 "gid":1073742257,
                  "height":64,
-                 "id":159,
+                 "id":165,
                  "name":"",
-                 "rotation":0,
+                 "rotation":180,
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":528,
-                 "y":7472
+                 "x":3232,
+                 "y":7056
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1277,7 +1277,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":160,
+ "nextobjectid":166,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.4.3",
@@ -1368,6 +1368,19 @@
         {
          "firstgid":877,
          "source":"..\/..\/..\/tiled\/$BigMonster2.tsx"
+        }, 
+        {
+         "columns":16,
+         "firstgid":889,
+         "image":"..\/..\/..\/..\/..\/..\/..\/..\/Program Files (x86)\/KADOKAWA\/RPGMV\/NewData\/img\/tilesets\/Outside_A4.png",
+         "imageheight":720,
+         "imagewidth":768,
+         "margin":0,
+         "name":"Outside_A4",
+         "spacing":0,
+         "tilecount":240,
+         "tileheight":48,
+         "tilewidth":48
         }],
  "tilewidth":64,
  "type":"map",

@@ -73,6 +73,11 @@ export class MoveState extends State<StateMachineOptions> {
       return;
     }
 
+    if (character.health.isDamaged()) {
+      this.stateMachine.transition('damage');
+      return;
+    }
+
     if (orders[Order.ACTION_ONE]) {
       this.stateMachine.transition('action');
       return;
@@ -152,15 +157,13 @@ export class JumpState extends State<StateMachineOptions> {
 }
 
 export class DamageState extends State<StateMachineOptions> {
-  enter({ character, scene }: StateMachineOptions) {
-    scene.time.delayedCall(500, () => {
-      this.stateMachine.transition('idle');
-    });
-  }
-
   execute({ character }: StateMachineOptions) {
     if (character.isFalling()) {
       this.stateMachine.transition('falling');
+    }
+
+    if (character.health.isInvulnerable()) {
+      this.stateMachine.transition('idle');
     }
   }
 }
@@ -181,7 +184,7 @@ export class FallingState extends State<StateMachineOptions> {
         character.health.setDamaged(HealthState.DEAD);
         character.health.oneShot();
         this.stateMachine.transition('dead');
-        sceneEvents.emit(PLAYER_HEALTH_CHANGED, character.health.value);
+        sceneEvents.emit(PLAYER_HEALTH_CHANGED, character.health.amount);
       },
     });
   }

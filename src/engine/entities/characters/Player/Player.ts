@@ -91,6 +91,7 @@ class Player extends Character {
       scene,
       character: this,
       health: 5,
+      invulnerabilityTime: 300,
       onChange: (health: number) => {
         sceneEvents.emit(PLAYER_HEALTH_CHANGED, { health, maximum: this.health.maximum });
       },

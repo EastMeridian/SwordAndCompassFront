@@ -219,6 +219,7 @@ class GameScene extends Phaser.Scene {
     this.player
       .setPosition((startPosition.objects[0].x || 0) + 24, (startPosition.objects[0].y || 0) + 24)
       .setSize(30, 32)
+      .setMass(0.1)
       .skills
       .add('arrow', new ArrowSkill(this.arrows))
       .add('heal', new HealSkill(this))
@@ -323,7 +324,7 @@ class GameScene extends Phaser.Scene {
       this.torchLights,
     );
 
-    this.cameras.main.startFollow(this.player/* , true, 0.05, 0.05 */);
+    this.cameras.main.startFollow(this.player, true, 0.5, 0.5);
 
     this.cameras.main.setZoom(1.2);
 
@@ -480,7 +481,7 @@ class GameScene extends Phaser.Scene {
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const monster = obj2 as Character;
-    if (!monster.health.isDamaged()) {
+    if (monster.health.isDamageable()) {
       this.sound.get('monster').play();
       const dx = monster.x - this.player.x;
       const dy = monster.y - this.player.y;
@@ -538,8 +539,8 @@ class GameScene extends Phaser.Scene {
     _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
-    const monster = obj2 as Ghost;
-    if (!this.player.health.isDamaged()) {
+    const monster = obj2 as Character;
+    if (this.player.health.isDamageable()) {
       this.sound.get('damage2').play();
       const dx = this.player.x - monster.x;
       const dy = this.player.y - monster.y;

@@ -50,20 +50,14 @@ export class ChargeState extends State<StateMachineOptions> {
             character.target.body.position.y - character.y,
           ).normalize();
           const speed = 900;
-          /* scene.tweens.add({
-            targets: character.anims,
-            timeScale: { out: 0.5, to: 2 },
-            ease: 'Sine.inOut',
-            duraton: 1200,
-          }); */
           scene.tweens.add({
             targets: character.body.velocity,
             x: orientation.x * speed,
             y: orientation.y * speed,
-            duration: 1000,
+            duration: 900,
             ease: Phaser.Math.Easing.Quadratic.Out,
             onComplete: () => {
-              scene.time.delayedCall(1000, () => {
+              scene.time.delayedCall(500, () => {
                 if (this.stateMachine.state === 'charge') {
                   this.stateMachine.transition('follow');
                 }
@@ -75,14 +69,20 @@ export class ChargeState extends State<StateMachineOptions> {
         }
       });
   }
+
+  execute({ character }: StateMachineOptions) {
+    if (character.health.isDead()) {
+      this.stateMachine.transition('dead');
+    }
+  }
 }
 
 export class FollowState extends State<StateMachineOptions> {
   private chargeCount = 0;
 
   private getInterval() {
-    let start = 3000 - this.chargeCount * 200;
-    if (start < 1000) start = 1000;
+    let start = 3000 - this.chargeCount * 100;
+    if (start < 1500) start = 1500;
     return Phaser.Math.Between(start, start + 500);
   }
 
@@ -118,11 +118,22 @@ export class FollowState extends State<StateMachineOptions> {
   }
 }
 
+export class StunState extends State<StateMachineOptions> {
+  enter({ character, scene, name }: StateMachineOptions) {
+    character.anims.play(`${name}_idle`, true);
+    character.setVelocity(0);
+    scene.time.delayedCall(1000, () => {
+      if (this.stateMachine.state === 'stun') {
+        this.stateMachine.transition('idle');
+      }
+    });
+  }
+}
 export class DamageState extends State<StateMachineOptions> {
   enter({ character, scene, name }: StateMachineOptions) {
     character.anims.play(`${name}_idle`, true);
-    scene.time.delayedCall(500, () => {
-      if (this.stateMachine.state !== 'idle') {
+    scene.time.delayedCall(150, () => {
+      if (this.stateMachine.state === 'damage') {
         this.stateMachine.transition('idle');
       }
     });

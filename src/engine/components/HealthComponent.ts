@@ -5,7 +5,8 @@ import Character from 'src/engine/entities/characters/Character';
 export enum HealthState {
   IDLE,
   DAMAGE,
-  DEAD
+  DEAD,
+  INVULNERABLE
 }
 
 interface Options {
@@ -14,6 +15,8 @@ interface Options {
   health?: number
   onChange?: (value: number) => void
   onDie?: () => void
+  invulnerabilityTime?: number
+  tenacity?: number;
 }
 
 export default class HealthComponent {
@@ -21,7 +24,7 @@ export default class HealthComponent {
 
   private _maximum: number;
 
-  get value() {
+  get amount() {
     return this._health;
   }
 
@@ -35,6 +38,14 @@ export default class HealthComponent {
 
   private character: Character;
 
+  private _invulerabilityTime: number;
+
+  get invulnerabilityTime() {
+    return this._invulerabilityTime;
+  }
+
+  private tenacity: number;
+
   private onChange?: (value: number) => void;
 
   private onDie?: () => void;
@@ -45,6 +56,8 @@ export default class HealthComponent {
     health = 1,
     onChange,
     onDie,
+    invulnerabilityTime = 200,
+    tenacity = 1,
   }: Options) {
     this.scene = scene;
     this.character = character;
@@ -52,6 +65,16 @@ export default class HealthComponent {
     this._maximum = health;
     this.onChange = onChange;
     this.onDie = onDie;
+    this._invulerabilityTime = invulnerabilityTime;
+    this.tenacity = tenacity;
+  }
+
+  isDamageable() {
+    return !this.isDamaged() && !this.isInvulnerable();
+  }
+
+  isInvulnerable() {
+    return this.healthState === HealthState.INVULNERABLE;
   }
 
   isDamaged() {
@@ -82,13 +105,15 @@ export default class HealthComponent {
     if (this._health <= 0) {
       return;
     }
-    if (this.healthState === HealthState.DAMAGE) return;
+    if (this.healthState === HealthState.DAMAGE
+      || this.healthState === HealthState.INVULNERABLE) return;
 
     this._health -= damage.amount;
 
     this.character.setVelocity(0);
 
     if (this._health <= 0) {
+      // DEAD
       this._health = 0;
       this.onChange?.(this._health);
 
@@ -107,7 +132,34 @@ export default class HealthComponent {
       });
       this.healthState = HealthState.DEAD;
       this.character.setTint(0xff0000);
-      /*
+    } else {
+      // DAMAGED
+      this.healthState = HealthState.DAMAGE;
+      this.character.setTint(0xff0000);
+      this.onChange?.(this._health);
+
+      const duration = 50 + 100 / this.tenacity;
+
+      this.scene.tweens.add({
+        targets: this.character.body.velocity,
+        duration,
+        x: damage.direction?.x,
+        y: damage.direction?.y,
+        ease: 'Stepped',
+        onComplete: () => {
+          this.character.setVelocity(0);
+          this.character.clearTint();
+          this.healthState = HealthState.INVULNERABLE;
+          this.scene.time.delayedCall(this._invulerabilityTime, () => {
+            this.healthState = HealthState.IDLE;
+          });
+        },
+      });
+    }
+  }
+}
+
+/*
       this.character.setTint(0xff0000);
 
       this.scene.tweens.add({
@@ -123,7 +175,7 @@ export default class HealthComponent {
         },
       });
  */
-      /* this.scene.tweens.add({
+/* this.scene.tweens.add({
         targets: this.character,
         tint: 0x000000,
         duration: 250,
@@ -136,30 +188,3 @@ export default class HealthComponent {
         ease: 'Sine.eastIn',
         onComplete: () => this.character.destroy(),
       }); */
-    } else {
-      this.onChange?.(this._health);
-
-      this.scene.tweens.add({
-        targets: this.character.body.velocity,
-        duration: 150,
-        x: damage.direction?.x,
-        y: damage.direction?.y,
-        ease: 'Stepped',
-        onComplete: () => {
-          this.character.setVelocity(0);
-        },
-      });
-      this.healthState = HealthState.DAMAGE;
-      this.character.setTint(0xff0000);
-
-      /*       scene.time.delayedCall(500, () => {
-        this.stateMachine.transition('move');
-      }); */
-
-      this.scene.time.delayedCall(500, () => {
-        this.character.clearTint();
-        this.healthState = HealthState.IDLE;
-      });
-    }
-  }
-}

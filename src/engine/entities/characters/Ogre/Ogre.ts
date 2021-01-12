@@ -16,6 +16,7 @@ import {
   DeadState,
   StateMachineOptions,
   ChargeState,
+  StunState,
 } from './States';
 import Character from '../Character';
 import DetectionCircle from '../../others/DetectionCircle';
@@ -40,7 +41,12 @@ class Ogre extends Character {
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
     this.direction = new DirectionComponent(Direction.DOWN);
-    this.health = new HealthComponent({ scene, health: 10, character: this });
+    this.health = new HealthComponent({
+      scene,
+      health: 10,
+      character: this,
+      tenacity: 4,
+    });
 
     this.setScale(1.8);
 
@@ -50,6 +56,7 @@ class Ogre extends Character {
       damage: new DamageState(),
       dead: new DeadState(),
       charge: new ChargeState(),
+      stun: new StunState(),
     }, { character: this, scene, name: 'ogre' });
 
     this.balloon = this.scene.add.sprite(x, y, 'balloon')
@@ -112,7 +119,7 @@ class Ogre extends Character {
   handleTileCollision(gameObject: Phaser.GameObjects.GameObject) {
     if (gameObject !== this) return;
     if (this.stateMachine.state === 'charge') {
-      this.stateMachine.transition('idle');
+      this.stateMachine.transition('stun');
       this.scene.cameras.main.shake(300, 0.01);
     }
   }

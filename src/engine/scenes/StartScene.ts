@@ -54,7 +54,7 @@ class StartScene extends Phaser.Scene {
     createElfAnimation(this);
 
     this.sound.add('intro_music', {
-      volume: 0.75,
+      volume: 0.6,
     });
     this.sound.add('cursor', {
       volume: 0.5,
