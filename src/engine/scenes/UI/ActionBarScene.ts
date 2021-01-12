@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import SoundManager from 'src/engine/system/SoundManager';
 
 class ActionBarScene extends Phaser.Scene {
   constructor() {
@@ -29,12 +30,10 @@ class ActionBarScene extends Phaser.Scene {
       .setAlpha(0.5).setScale(0.5).setInteractive()
       .on('pointerdown', () => {
         volumeButton.setScale(0.4);
-        if (this.sound.volume === 0) {
-          volumeButton.setTexture('volume');
-          this.sound.volume = 1;
-        } else if (this.sound.volume === 1) {
+        if (SoundManager.toggle()) {
           volumeButton.setTexture('mute');
-          this.sound.volume = 0;
+        } else {
+          volumeButton.setTexture('volume');
         }
       })
       .on('pointerout', () => {

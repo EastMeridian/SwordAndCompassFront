@@ -23,6 +23,5 @@ export class DeadState extends State<StateMachineCharacterOptions> {
       ease: 'Sine.eastIn',
       onComplete: () => character?.destroy(),
     });
-    /* character?.destroy(); */
   }
 }

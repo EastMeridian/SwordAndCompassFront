@@ -18,6 +18,7 @@ import {
 
 import { Direction } from 'src/utils/Direction';
 import MusicManager from '../system/MusicManager';
+import SoundManager from '../system/SoundManager';
 import FormUtil from './UI/FormUtil';
 
 class StartScene extends Phaser.Scene {
@@ -41,6 +42,7 @@ class StartScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.cameras.main;
+    SoundManager.setCurrentScene(this);
 
     const screenCenterX = (width / 2);
     const screenCenterY = (height / 2);
@@ -139,7 +141,6 @@ class StartScene extends Phaser.Scene {
 
     this.cameras.main.fadeIn(1500);
 
-    this.sound.volume = 0.5;
     MusicManager.play('intro_music');
   }
 

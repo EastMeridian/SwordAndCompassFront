@@ -41,6 +41,7 @@ import { createRecoveryAnimation } from '../animations/createSpellAnimation';
 import HealSkill from '../components/skills/HealSkill';
 import { PlayerData } from '../data/entities';
 import MusicManager from '../system/MusicManager';
+import SoundManager from '../system/SoundManager';
 
 class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -96,6 +97,8 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    SoundManager.setCurrentScene(this);
+
     this.sound.add('chest', {
       volume: 0.2,
     });
@@ -326,7 +329,6 @@ class GameScene extends Phaser.Scene {
 
     this.bigLens = this.add.circle(400, 300, 8, 0xffffff, 0.4).setDepth(5);
 
-    this.sound.volume = 1;
     MusicManager.play('dongeon_music');
     MusicManager.fadeIn(500);
     this.cameras.main.fadeIn(1500);
@@ -446,10 +448,10 @@ class GameScene extends Phaser.Scene {
     arrow.setVelocity(0);
     arrow.setOperating(false);
 
-    this.time.delayedCall(500, () => {
+    this.time.delayedCall(1000, () => {
       this.arrows.kill(arrow);
-      this.monsters?.arrows.kill(arrow);
-    });
+      /*       this.monsters?.arrows.kill(arrow);
+ */ });
   }
 
   private handleSwordMonsterCollision(

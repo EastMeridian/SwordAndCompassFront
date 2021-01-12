@@ -114,6 +114,7 @@ class PreloaderScene extends Phaser.Scene {
   }
 
   create() {
+    this.input.mouse.disableContextMenu();
     MusicManager.setScene(this);
     this.scene.start('start');
     this.scene.run('ui-actionbar');

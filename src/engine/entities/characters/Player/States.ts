@@ -133,6 +133,8 @@ export class ActionOneState extends State<StateMachineOptions> {
     character.skills.useCurrent(orientation, () => {
       if (!character.health.isDead()) {
         this.stateMachine.transition('idle');
+      } else if (this.stateMachine.getState() === 'action') {
+        this.stateMachine.transition('dead');
       }
     });
     character.anims.play(`${name}_idle_${character.direction.value}`, true);

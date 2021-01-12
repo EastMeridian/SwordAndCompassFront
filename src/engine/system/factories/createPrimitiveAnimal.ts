@@ -9,3 +9,14 @@ export const createPrimitiveAnimal = (
   monster: Phaser.Types.Tilemaps.TiledObject,
   properties: Record<string, any>,
 ) => new PrimitiveAnimal(scene, monster.x!, monster.y!, 'monster_2', properties.skin).setPipeline(PIPELINE);
+
+export const createBat = (
+  scene: Phaser.Scene,
+  monster: Phaser.Types.Tilemaps.TiledObject,
+  properties: Record<string, any>,
+) => {
+  const animal = createPrimitiveAnimal(scene, monster, properties);
+  scene.physics.world.enableBody(animal, Phaser.Physics.Arcade.DYNAMIC_BODY);
+  animal.setSize(24, 24).setOffset(4, 0);
+  return animal;
+};

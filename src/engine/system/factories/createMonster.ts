@@ -8,7 +8,7 @@ import Arrow from 'src/engine/entities/spells/Arrow';
 import SwordSwing from 'src/engine/entities/spells/SwordSwing';
 import PrimitiveAnimal from 'src/engine/entities/characters/PrimitiveAnimal/PrimitiveAnimal';
 import { BOKOBLIN, createBokoblin } from './createBokoblin';
-import { PRIMITIVE_ANIMAL, createPrimitiveAnimal } from './createPrimitiveAnimal';
+import { PRIMITIVE_ANIMAL, createPrimitiveAnimal, createBat } from './createPrimitiveAnimal';
 import { createOgre, OGRE } from './createOgre';
 
 export interface Monsters {
@@ -34,7 +34,7 @@ export const createMonster = (
   switch (properties.type) {
     case PRIMITIVE_ANIMAL:
       return monsters.primitiveAnimals.add(
-        createPrimitiveAnimal(scene, monster, properties),
+        createBat(scene, monster, properties),
         true,
       );
     case BOKOBLIN:
@@ -59,8 +59,8 @@ export const createMonsters = (
     primitiveAnimals: scene.physics.add.group({
       classType: PrimitiveAnimal,
       createCallback: (go) => {
-        const ghost = go as PrimitiveAnimal;
-        ghost.body.onCollide = true;
+        const animal = go as PrimitiveAnimal;
+        animal.body.onCollide = true;
       },
     }),
 

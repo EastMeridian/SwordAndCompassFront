@@ -5,14 +5,14 @@ import GameUI from './scenes/UI/GameUIScene';
 import StartScreen from './scenes/StartScene';
 import ActionBarScene from './scenes/UI/ActionBarScene';
 
-export const createGameConfig = (): Phaser.Types.Core.GameConfig => ({
+export const createGameConfig = (debug = false): Phaser.Types.Core.GameConfig => ({
   type: Phaser.WEBGL,
 
   physics: {
     default: 'arcade',
     arcade: {
       fps: 64,
-      /* debug: true, */
+      debug,
       /*  overlapBias: 64, */
     },
   },
