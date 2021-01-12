@@ -21,7 +21,6 @@ class SoundManager {
   setCurrentScene(scene: Phaser.Scene) {
     this.currentScene = scene;
     this.currentScene.sound.volume = this.muted ? 0 : this._volume;
-    console.log('setCurrentScene', this.muted);
   }
 
   toggle() {
