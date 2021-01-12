@@ -97,6 +97,9 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    const {
+      width, height, worldView,
+    } = this.cameras.main;
     SoundManager.setCurrentScene(this);
 
     this.sound.add('chest', {
@@ -340,10 +343,23 @@ class GameScene extends Phaser.Scene {
 
     sceneEvents.on(PLAYER_DEAD, () => {
       this.cameras.main.shake(300, 0.01);
-      /* this.cameras.main.fadeOut(1500); */
+      this.player.setDepth(12).resetPipeline();
+      const rectangle = this.add
+        .rectangle(worldView.centerX, worldView.centerY, width, height, 0x000000)
+        .setDepth(11)
+        .setAlpha(0);
       this.scene.stop('game-ui');
-      this.time.delayedCall(1500, () => {
-        this.playerDead = true;
+      this.tweens.add({
+        targets: rectangle,
+        alpha: 1,
+        duration: 1250,
+        ease: Phaser.Math.Easing.Linear,
+        onComplete: () => {
+          this.cameras.main.fadeOut(1000);
+          this.time.delayedCall(1000, () => {
+            this.playerDead = true;
+          });
+        },
       });
     });
   }

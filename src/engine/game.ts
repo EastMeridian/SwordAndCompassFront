@@ -6,7 +6,7 @@ import StartScreen from './scenes/StartScene';
 import ActionBarScene from './scenes/UI/ActionBarScene';
 
 export const createGameConfig = (debug = false): Phaser.Types.Core.GameConfig => ({
-  type: Phaser.WEBGL,
+  type: Phaser.AUTO,
 
   physics: {
     default: 'arcade',
@@ -26,6 +26,5 @@ export const createGameConfig = (debug = false): Phaser.Types.Core.GameConfig =>
     height: window.innerHeight,
     width: window.innerWidth,
     parent: 'game-container',
-
   },
 });

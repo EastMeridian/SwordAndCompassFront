@@ -26,7 +26,11 @@ class ActionBarScene extends Phaser.Scene {
         fullScreenButton.setScale(0.5);
       });
 
-    const volumeButton = this.add.image(width - 64, 24, 'volume')
+    const volumeButton = this.add.image(
+      width - 64,
+      24,
+      SoundManager.isMuted() ? 'mute' : 'volume',
+    )
       .setAlpha(0.5).setScale(0.5).setInteractive()
       .on('pointerdown', () => {
         volumeButton.setScale(0.4);

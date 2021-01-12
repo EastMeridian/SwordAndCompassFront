@@ -111,7 +111,7 @@ export class DamageState extends State<StateMachineBokoblinOptions> {
     scene.time.delayedCall(500, () => {
       if (!character.health.isDead()) {
         this.stateMachine.transition('idle');
-      } else if (this.stateMachine.getState() !== 'dead') {
+      } else if (this.stateMachine.state !== 'dead') {
         this.stateMachine.transition('dead');
       }
     });

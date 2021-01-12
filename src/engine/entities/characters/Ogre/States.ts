@@ -40,7 +40,7 @@ export class ChargeState extends State<StateMachineOptions> {
 
     character.balloon?.setAlpha(1)
       .play('idea_balloon')
-      .on('animationcomplete', () => {
+      .on('animationcomplete', (data: any) => {
         character.balloon?.setAlpha(0);
         character.anims.play(`${name}_walk`, true);
 
@@ -64,7 +64,9 @@ export class ChargeState extends State<StateMachineOptions> {
             ease: Phaser.Math.Easing.Quadratic.Out,
             onComplete: () => {
               scene.time.delayedCall(1000, () => {
-                if (this.stateMachine.getState() === 'charge') this.stateMachine.transition('follow');
+                if (this.stateMachine.state === 'charge') {
+                  this.stateMachine.transition('follow');
+                }
               });
             },
           });
@@ -79,16 +81,16 @@ export class FollowState extends State<StateMachineOptions> {
   private chargeCount = 0;
 
   private getInterval() {
-    this.chargeCount++;
-    const start = 3000 - this.chargeCount * 200;
-
+    let start = 3000 - this.chargeCount * 200;
+    if (start < 1000) start = 1000;
     return Phaser.Math.Between(start, start + 500);
   }
 
   enter({ character, scene }: StateMachineOptions) {
     const interval = this.getInterval();
     scene.time.delayedCall(interval, () => {
-      if (!character.health.isDead()) {
+      if (!character.health.isDead() && this.stateMachine.state !== 'charge') {
+        this.chargeCount++;
         this.stateMachine.transition('charge');
       }
     });
@@ -119,9 +121,13 @@ export class FollowState extends State<StateMachineOptions> {
 export class DamageState extends State<StateMachineOptions> {
   enter({ character, scene, name }: StateMachineOptions) {
     character.anims.play(`${name}_idle`, true);
-
+    console.log('OGRE enter damage');
     scene.time.delayedCall(500, () => {
-      this.stateMachine.transition('idle');
+      if (this.stateMachine.state !== 'idle') {
+        console.log('OGRE damage to idle');
+
+        this.stateMachine.transition('idle');
+      }
     });
   }
 }

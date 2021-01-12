@@ -11,5 +11,7 @@ export const createOgre = (
 ) => {
   monsters.ogres!.get(monster.x, monster.y, 'big_monster_2')
     .setPipeline(PIPELINE)
-    .setDetectionCircle(monsters.detectionCircles, 300);
+    .setDetectionCircle(monsters.detectionCircles, 300)
+    .setSize(72, 76)
+    .setMass(1);
 };

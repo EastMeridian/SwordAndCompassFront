@@ -53,7 +53,7 @@ class Ogre extends Character {
     }, { character: this, scene, name: 'ogre' });
 
     this.balloon = this.scene.add.sprite(x, y, 'balloon')
-      .setOrigin(-1, 1)
+      .setOrigin(-0.8, 1)
       .setDepth(2)
       .setAlpha(0);
 
@@ -111,7 +111,7 @@ class Ogre extends Character {
 
   handleTileCollision(gameObject: Phaser.GameObjects.GameObject) {
     if (gameObject !== this) return;
-    if (this.stateMachine.getState() === 'charge') {
+    if (this.stateMachine.state === 'charge') {
       this.stateMachine.transition('idle');
       this.scene.cameras.main.shake(300, 0.01);
     }

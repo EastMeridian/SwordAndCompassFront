@@ -24,7 +24,6 @@ import { SkillData } from 'src/engine/components/skills/SkillData';
 import { InventoryComponent } from 'src/engine/components/InventoryComponent';
 import { Stackable } from 'src/engine/components/Stackable';
 import Chest from '../../objects/Chest';
-import SwordSwing from '../../spells/SwordSwing';
 import {
   IdleState,
   MoveState,

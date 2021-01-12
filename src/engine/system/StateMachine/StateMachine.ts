@@ -7,7 +7,11 @@ export class StateMachine<T> {
 
   private stateOptions: T;
 
-  private state: string | null;
+  private _state: string | null;
+
+  get state() {
+    return this._state;
+  }
 
   private deleted = false;
 
@@ -15,7 +19,7 @@ export class StateMachine<T> {
     this.initialState = state;
     this.stateStore = stateStore;
     this.stateOptions = stateOptions;
-    this.state = null;
+    this._state = null;
 
     Object.values(this.stateStore).forEach((state) => {
       state.setContext(this);
@@ -24,24 +28,20 @@ export class StateMachine<T> {
 
   step() {
     if (!this.deleted) {
-      if (this.state === null) {
-        this.state = this.initialState;
-        this.stateStore[this.state].enter(this.stateOptions);
+      if (this._state === null) {
+        this._state = this.initialState;
+        this.stateStore[this._state].enter(this.stateOptions);
       }
 
-      this.stateStore[this.state]?.execute?.(this.stateOptions);
+      this.stateStore[this._state]?.execute?.(this.stateOptions);
     }
   }
 
   public transition(nextState: string) {
     if (!this.deleted) {
-      this.state = nextState;
-      this.stateStore[this.state]?.enter(this.stateOptions);
+      this._state = nextState;
+      this.stateStore[this._state]?.enter(this.stateOptions);
     }
-  }
-
-  getState() {
-    return this.state;
   }
 
   destroy() {

@@ -15,7 +15,7 @@ class SoundManager {
 
   setVolume(volume: number) {
     this._volume = volume;
-    this.currentScene.sound.volume = this._volume;
+    if (this.currentScene) this.currentScene.sound.volume = this._volume;
   }
 
   setCurrentScene(scene: Phaser.Scene) {
@@ -32,6 +32,14 @@ class SoundManager {
     }
     this.setVolume(this.volumeBuffer);
     this.muted = false;
+    return this.muted;
+  }
+
+  setMuted(muted: boolean) {
+    this.muted = muted;
+  }
+
+  isMuted() {
     return this.muted;
   }
 }

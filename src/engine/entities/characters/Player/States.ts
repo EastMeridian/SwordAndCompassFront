@@ -133,7 +133,7 @@ export class ActionOneState extends State<StateMachineOptions> {
     character.skills.useCurrent(orientation, () => {
       if (!character.health.isDead()) {
         this.stateMachine.transition('idle');
-      } else if (this.stateMachine.getState() === 'action') {
+      } else if (this.stateMachine.state === 'action') {
         this.stateMachine.transition('dead');
       }
     });
@@ -189,7 +189,7 @@ export class FallingState extends State<StateMachineOptions> {
 
 export class DeadState extends State<StateMachineOptions> {
   // eslint-disable-next-line class-methods-use-this
-  enter({ name, character }: StateMachineOptions) {
+  enter({ name, character, scene }: StateMachineOptions) {
     character.anims.play(`${name}_dead`, true);
   }
 }
