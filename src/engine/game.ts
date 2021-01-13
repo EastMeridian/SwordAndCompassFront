@@ -4,6 +4,8 @@ import GameScene from './scenes/GameScene';
 import GameUI from './scenes/UI/GameUIScene';
 import StartScreen from './scenes/StartScene';
 import ActionBarScene from './scenes/UI/ActionBarScene';
+import 'src/engine/entities/characters/Player/Player';
+import 'src/engine/scenes/UI/UIComponents/ActionButton';
 
 export const createGameConfig = (debug = false): Phaser.Types.Core.GameConfig => ({
   type: Phaser.AUTO,

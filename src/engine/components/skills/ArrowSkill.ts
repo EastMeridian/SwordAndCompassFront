@@ -11,8 +11,8 @@ export default class ArrowSkill implements Skill {
   }
 
   public data: SkillData = {
-    frame: 33,
-    originX: 0.55,
+    frame: 155,
+    /* originX: 0.55, */
   };
 
   use(direction: Phaser.Math.Vector2, character: Character, onComplete: () => void) {

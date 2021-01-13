@@ -69,6 +69,7 @@ class PreloaderScene extends Phaser.Scene {
     this.load.spritesheet('lights', 'assets/sprites/other_2.png', { frameWidth: 32, frameHeight: 64 });
     this.load.spritesheet('balloon', 'assets/sprites/balloon.png', { frameWidth: 48, frameHeight: 48 });
     this.load.spritesheet('icons', 'assets/sprites/icons.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('icons_2', 'assets/sprites/icons_2.png', { frameWidth: 24, frameHeight: 24 });
 
     this.load.spritesheet('monster', 'assets/sprites/monster_1.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('monster_2', 'assets/sprites/monster_2.png', { frameWidth: 32, frameHeight: 32 });
@@ -109,8 +110,8 @@ class PreloaderScene extends Phaser.Scene {
     this.load.image('right_arrow', 'assets/icons/right-arrow.png');
     this.load.image('switch-to-full-screen', 'assets/icons/switch-to-full-screen-button.png');
     this.load.image('mute', 'assets/icons/mute.png');
-
     this.load.image('volume', 'assets/icons/volume.png');
+    this.load.image('gear', 'assets/icons/gear.png');
   }
 
   create() {

@@ -70,13 +70,9 @@ class GameScene extends Phaser.Scene {
     this.playerDead = false;
   }
 
-  init({ texture, anims }: PlayerData) {
-    this.playerData = { texture, anims };
-    this.player = this.add.player(
-      0, 0,
-      texture,
-      anims,
-    ).setPipeline(PIPELINE);
+  init(data: PlayerData) {
+    this.playerData = data;
+    this.player = this.add.player(0, 0, data).setPipeline(PIPELINE);
     this.playerDead = false;
   }
 
@@ -217,7 +213,7 @@ class GameScene extends Phaser.Scene {
     });
 
     this.player
-      .setPosition((startPosition.objects[0].x || 0) + 24, (startPosition.objects[0].y || 0) + 24)
+      .setPosition((startPosition.objects[0].x || 0) - 24, (startPosition.objects[0].y || 0) + 24)
       .setSize(30, 32)
       .setMass(0.1)
       .skills
@@ -342,10 +338,7 @@ class GameScene extends Phaser.Scene {
     MusicManager.fadeIn(500);
     this.cameras.main.fadeIn(1500);
 
-    this.scene.run('game-ui', {
-      data: this.player.skills.getCurrentData(),
-      stackables: this.player.inventory.list(),
-    });
+    this.scene.run('game-ui', this.player);
 
     sceneEvents.on(PLAYER_DEAD, () => {
       this.cameras.main.shake(300, 0.01);
@@ -471,9 +464,8 @@ class GameScene extends Phaser.Scene {
     arrow.setOperating(false);
 
     this.time.delayedCall(1000, () => {
-      this.arrows.kill(arrow);
-      /*       this.monsters?.arrows.kill(arrow);
- */ });
+      arrow.setActive(false);
+    });
   }
 
   private handleSwordMonsterCollision(

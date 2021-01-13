@@ -13,11 +13,10 @@ export default class HealSkill implements Skill {
   private heal?: Heal;
 
   public data: SkillData = {
-    texture: 'recovery1',
-    frame: 16,
-    scale: 0.4,
+    frame: 28,
+    /*  scale: 0.4,
     originX: 1,
-    originY: 2.2,
+    originY: 2.2, */
   };
 
   constructor(scene: Phaser.Scene) {

@@ -7,7 +7,7 @@ import DirectionComponent from 'src/engine/components/DirectionComponent';
 import { StateMachine } from 'src/engine/system/StateMachine';
 import { Cooldown } from 'src/utils/Cooldown';
 import SkillsComponent from 'src/engine/components/SkillsComponent';
-import { BokoblinData } from 'src/engine/data/entities';
+import { BokoblinData, EnemyData } from 'src/engine/data/entities';
 import Character from '../Character';
 import {
   IdleState,
@@ -16,9 +16,10 @@ import {
   StrikeState,
   StateMachineBokoblinOptions,
 } from './States';
-import { StateMachineCharacterOptions, DeadState } from '../States';
+import { StateMachineEnemyOptions, DeadState } from '../States';
+import Enemy from '../Enemy';
 
-class Bokoblin extends Character {
+class Bokoblin extends Enemy {
   private detectionCircle!: DetectionCircle;
 
   private swingDetectionCircle!: DetectionCircle;
@@ -33,9 +34,7 @@ class Bokoblin extends Character {
 
   public direction: DirectionComponent;
 
-  public stateMachine: StateMachine<
-    StateMachineCharacterOptions | StateMachineBokoblinOptions
-  >;
+  public stateMachine: StateMachine<StateMachineBokoblinOptions | StateMachineEnemyOptions>;
 
   public swingCooldown: Cooldown;
 
@@ -43,15 +42,18 @@ class Bokoblin extends Character {
 
   public speed: number;
 
+  public entity: EnemyData;
+
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
     texture: string,
-    { health, speed, cooldown }: BokoblinData,
+    data: BokoblinData,
   ) {
     super(scene, x, y, texture);
-
+    const { health, speed, cooldown } = data;
+    this.entity = data;
     this.direction = new DirectionComponent(Direction.DOWN);
     this.health = new HealthComponent({ scene, character: this, health });
     this.skills = new SkillsComponent(this);

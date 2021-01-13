@@ -44,9 +44,12 @@ export class MoveState extends State<StateMachineOptions> {
 export class DamageState extends State<StateMachineOptions> {
   enter({ character, scene, name }: StateMachineOptions) {
     character.anims.play(`${name}_idle_${character.direction.value}`, true);
-
     scene.time.delayedCall(500, () => {
-      this.stateMachine.transition('move');
+      if (!character.health.isDead()) {
+        this.stateMachine.transition('move');
+      } else if (this.stateMachine.state !== 'dead') {
+        this.stateMachine.transition('dead');
+      }
     });
   }
 }
@@ -55,8 +58,8 @@ export class DeadState extends State<StateMachineOptions> {
   // eslint-disable-next-line class-methods-use-this
   enter({ character, scene, name }: StateMachineOptions) {
     character.anims.play(`${name}_idle_${character.direction.value}`, true);
+    character.setDepth(0);
 
-    character.disableBody();
     scene.tweens.add({
       targets: character,
       alpha: 0,

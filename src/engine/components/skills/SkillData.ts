@@ -1,7 +1,7 @@
 export interface SkillData {
   frame?: number,
   texture?: string;
-  originX?: number;
+/*   originX?: number;
   originY?: number;
-  scale?: number;
+  scale?: number; */
 }

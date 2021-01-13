@@ -3,6 +3,7 @@ import { Direction, getDirectionFromOrientation } from 'src/utils/Direction';
 import { Damage } from 'src/utils/Damage';
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import {
+  ENEMY_DIE,
   PLAYER_CHANGED_SPELL,
   PLAYER_COINS_CHANGED,
   PLAYER_DEAD,
@@ -23,6 +24,9 @@ import SkillsComponent from 'src/engine/components/SkillsComponent';
 import { SkillData } from 'src/engine/components/skills/SkillData';
 import { InventoryComponent } from 'src/engine/components/InventoryComponent';
 import { Stackable } from 'src/engine/components/Stackable';
+import { Attributes } from 'src/engine/components/Attributes';
+import { EnemyData, PlayerData } from 'src/engine/data/entities';
+import { LevelingComponent } from 'src/engine/components/LevelingComponent';
 import Chest from '../../objects/Chest';
 import {
   IdleState,
@@ -75,18 +79,33 @@ class Player extends Character {
 
   public inventory: InventoryComponent;
 
+  public leveling: LevelingComponent;
+
   private falling = false;
 
   private jumping = false;
 
-  public speed = 200;
+  public entity: PlayerData;
+
+  public attributes: Attributes;
 
   skills: SkillsComponent;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string, anims: string) {
-    super(scene, x, y, texture);
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    playerData: PlayerData,
+  ) {
+    super(scene, x, y, playerData.texture);
+    const { attributes, anims } = playerData;
+
+    this.entity = playerData;
+    // COMPONENTS
+    this.leveling = new LevelingComponent();
 
     this.direction = new DirectionComponent(Direction.DOWN);
+
     this.health = new HealthComponent({
       scene,
       character: this,
@@ -103,7 +122,7 @@ class Player extends Character {
     this.inventory = new InventoryComponent({
       arrow: {
         name: 'arrow',
-        amount: 10,
+        amount: 1000,
         frame: 106,
       },
       gold: {
@@ -119,6 +138,8 @@ class Player extends Character {
       sceneEvents.emit(PLAYER_CHANGED_SPELL, data);
     });
 
+    this.attributes = attributes;
+    // EVENTS
     scene.input.on('pointerdown', function (this: Player) {
       this.orders[Order.ACTION_ONE] = true;
     }, this);
@@ -148,6 +169,11 @@ class Player extends Character {
     }, { character: this, scene, name: anims });
 
     this.pointer = scene.input.mousePointer;
+
+    sceneEvents.on(ENEMY_DIE, (enemy: EnemyData) => {
+      this.leveling.addExperience(enemy.experience);
+      console.log({ leveling: this.leveling });
+    });
   }
 
   isJumping() {
@@ -214,7 +240,7 @@ class Player extends Character {
 
     const jumpDirection = direction !== Direction.LEFT ? 1 : -1;
 
-    const speed = 600;
+    const speed = this.attributes.speed * 3;
 
     this.scene.sound.get('skill1').play();
     this.scene.tweens.add({
@@ -280,10 +306,9 @@ Phaser.GameObjects.GameObjectFactory.register('player', function (
   this: Phaser.GameObjects.GameObjectFactory,
   x: number,
   y: number,
-  texture: string,
-  anims: string,
+  playerData: PlayerData,
 ) {
-  const sprite = new Player(this.scene, x, y, texture, anims).setScale(1.6);
+  const sprite = new Player(this.scene, x, y, playerData).setScale(1.6);
 
   this.displayList.add(sprite);
   this.updateList.add(sprite);

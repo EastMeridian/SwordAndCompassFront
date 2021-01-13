@@ -111,7 +111,7 @@ export class MoveState extends State<StateMachineOptions> {
       character.setVelocityX(1);
     }
 
-    character.body.velocity.normalize().scale(character.speed);
+    character.body.velocity.normalize().scale(character.attributes.speed);
 
     if (orders[Order.LEFT]) {
       character.direction.setDirection(Direction.LEFT);

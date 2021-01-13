@@ -1,6 +1,8 @@
 import PrimitiveAnimal from '../entities/characters/PrimitiveAnimal/PrimitiveAnimal';
 import Player from '../entities/characters/Player';
 import SwordSwing from '../entities/spells/SwordSwing';
+import { PlayerData } from '../data/entities';
+import { ActionButtonOptions } from '../scenes/UI/UIComponents/ActionButton';
 
 declare global {
   namespace Phaser.GameObjects {
@@ -9,8 +11,7 @@ declare global {
       player(
         x: number,
         y: number,
-        texture: string,
-        anims: string
+        data: PlayerData,
       ): Player
 
       swordSwing(
@@ -26,6 +27,13 @@ declare global {
         texture: string,
         anims: string
       ): PrimitiveAnimal
+
+      actionButton(
+        x: number,
+        y: number,
+        texture: string,
+        options: ActionButtonOptions
+      ): Image
     }
   }
 }

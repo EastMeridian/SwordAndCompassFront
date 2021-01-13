@@ -10,7 +10,7 @@ export default class WeaponSkill implements Skill {
   private currentWeapon?: SwordSwing;
 
   public data: SkillData = {
-    frame: 24,
+    frame: 72,
   };
 
   constructor(weaponGroup: Phaser.Physics.Arcade.Group) {
