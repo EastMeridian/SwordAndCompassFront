@@ -172,7 +172,6 @@ class Player extends Character {
 
     sceneEvents.on(ENEMY_DIE, (enemy: EnemyData) => {
       this.leveling.addExperience(enemy.experience);
-      console.log({ leveling: this.leveling });
     });
   }
 
