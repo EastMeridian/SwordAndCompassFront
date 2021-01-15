@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { Attribute } from 'src/engine/components/Attributes';
 import { SkillData } from 'src/engine/components/skills/SkillData';
 import { Stackable } from 'src/engine/components/Stackable';
 import Player from 'src/engine/entities/characters/Player';
@@ -9,21 +10,17 @@ import {
   PLAYER_ENERGY_CHANGED,
   PLAYER_CHANGED_SPELL,
   PLAYER_STACKABLE_CHANGED,
+  PLAYER_LEVEL_CHANGED,
 } from 'src/engine/events/events';
 import { Colors } from 'src/styles/Theme';
 import { Direction } from 'src/utils/Direction';
-
-interface InitializationOptions {
-  player: Player;
-  stackables: Stackable[];
-}
-
-const lifeSection = 4;
+import { DataRow } from './UIComponents/DataRow';
+import { Gauge } from './UIComponents/Gauge';
 
 class GameUIScene extends Phaser.Scene {
-  private healthGauge!: Phaser.GameObjects.Rectangle;
+  private healthGauge!: Gauge;
 
-  private energyGauge!: Phaser.GameObjects.Rectangle;
+  private energyGauge!: Gauge;
 
   private spellIcon?: Phaser.GameObjects.Sprite;
 
@@ -31,12 +28,18 @@ class GameUIScene extends Phaser.Scene {
 
   private player!: Player;
 
-  private profileContainer!: Phaser.GameObjects.Container;
+  private profileContainer: Record<string,
+  Phaser.GameObjects.GameObject | DataRow
+  > = {};
 
   private stackableRows: Record<string, {
     text: Phaser.GameObjects.Text;
     sprite: Phaser.GameObjects.Sprite;
   }> = {};
+
+  private chipContainer?: Phaser.GameObjects.Arc;
+
+  private chipText?: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'game-ui' });
@@ -80,13 +83,9 @@ class GameUIScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
     let overlayToggled = false;
 
-    this.add.rectangle(16, 16, 148, 8, Colors.grey).setOrigin(0, 0);
+    this.healthGauge = this.add.gauge(16, 16, Colors.redLife);
 
-    this.healthGauge = this.add.rectangle(16, 16, 148, 8, Colors.redLife).setOrigin(0, 0);
-
-    this.add.rectangle(16, 30, 148, 8, Colors.grey).setOrigin(0, 0);
-
-    this.energyGauge = this.add.rectangle(16, 30, 148, 8, Colors.greenEnergy).setOrigin(0, 0);
+    this.energyGauge = this.add.gauge(16, 30, Colors.greenEnergy);
 
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000).setOrigin(0, 0).setAlpha(0);
 
@@ -115,7 +114,7 @@ class GameUIScene extends Phaser.Scene {
           duration: 200,
           alpha: 0,
         });
-        this.profileContainer.destroy();
+        Object.entries(this.profileContainer).forEach(([key, item]) => item.destroy());
       }
       overlayToggled = !overlayToggled;
     });
@@ -127,6 +126,7 @@ class GameUIScene extends Phaser.Scene {
       button.setScale(32 / 24);
     });
 
+    this.createChip();
     // EVENTS
     sceneEvents.on(PLAYER_HEALTH_CHANGED, this.handlePlayerHealthChange, this);
 
@@ -135,6 +135,8 @@ class GameUIScene extends Phaser.Scene {
     sceneEvents.on(PLAYER_STACKABLE_CHANGED, this.updateStackableRow, this);
 
     sceneEvents.on(PLAYER_CHANGED_SPELL, this.createSpellIcon, this);
+
+    sceneEvents.on(PLAYER_LEVEL_CHANGED, this.updateChip, this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       sceneEvents.off(PLAYER_HEALTH_CHANGED, this.handlePlayerHealthChange, this);
@@ -151,9 +153,68 @@ class GameUIScene extends Phaser.Scene {
     this.spellIcon?.setTexture(texture).setFrame(frame);
   }
 
+  private createChip() {
+    const { width, height } = this.cameras.main;
+    this.chipContainer = this.add.circle(width - 64, height - 64, 12, Colors.redBlood);
+    this.chipText = this.add.text(
+      width - 64,
+      height - 64,
+      this.player.leveling.rewardCount.toString(),
+      {
+        fontFamily: 'minecraft',
+        fontSize: '14px',
+      },
+    ).setOrigin(0.5, 0.5);
+    if (this.player.leveling.rewardCount === 0) {
+      this.tweens.add({
+        targets: this.chipContainer,
+        duration: 150,
+        alpha: 0,
+        ease: Phaser.Math.Easing.Bounce,
+      });
+      this.tweens.add({
+        targets: this.chipText,
+        duration: 150,
+        alpha: 0,
+        ease: Phaser.Math.Easing.Bounce,
+      });
+    }
+  }
+
+  private updateChip() {
+    if (this.player.leveling.rewardCount === 0) {
+      this.tweens.add({
+        targets: this.chipContainer,
+        duration: 150,
+        alpha: 0,
+        ease: Phaser.Math.Easing.Bounce,
+      });
+      this.tweens.add({
+        targets: this.chipText,
+        duration: 150,
+        alpha: 0,
+        ease: Phaser.Math.Easing.Bounce,
+      });
+    } else if (this.chipText) {
+      this.tweens.add({
+        targets: this.chipContainer,
+        duration: 150,
+        alpha: 1,
+        ease: Phaser.Math.Easing.Bounce,
+      });
+      this.tweens.add({
+        targets: this.chipText,
+        duration: 150,
+        alpha: 1,
+        ease: Phaser.Math.Easing.Bounce,
+      });
+      this.chipText.text = this.player.leveling.rewardCount.toString();
+    }
+  }
+
   private handlePlayerHealthChange({ health, maximum }: { health: number, maximum: number }) {
     this.tweens.add({
-      targets: this.healthGauge,
+      targets: this.healthGauge.gauge,
       scaleX: health / maximum,
       duration: 250,
       ease: 'Sine.eastIn',
@@ -162,7 +223,7 @@ class GameUIScene extends Phaser.Scene {
 
   private handlePlayerEnergyChange(energy: number) {
     this.tweens.add({
-      targets: this.energyGauge,
+      targets: this.energyGauge.gauge,
       scaleX: (energy / 100) || 0,
       duration: 500,
       ease: 'Linear',
@@ -173,15 +234,118 @@ class GameUIScene extends Phaser.Scene {
     this.stackableRows[stackable.name].text.text = stackable.amount.toString();
   }
 
+  private createRewards() {
+    const { height } = this.cameras.main;
+    if (this.player.leveling.rewardCount > 0) {
+      this.profileContainer.availableText = this.add.dataRow(218, height - 136, {
+        key: 'Available point: ',
+        value: this.player.leveling.rewardCount.toString(),
+      });
+      Object.entries(this.player.attributes).forEach(
+        ([key, value], index) => {
+          const button = this.add.rectangle(600, 432 + index * 48, 24, 24, Colors.blueExp)
+            .setAlpha(0.5)
+            .setInteractive();
+          const icon = this.add.image(600, 432 + index * 48, 'plus')
+            .setAlpha(0.8);
+
+          button.on('pointerdown', () => {
+            button.setScale(0.9);
+            icon.setScale(0.9);
+          });
+
+          button.on('pointerout', () => {
+            button.setScale(1);
+            icon.setScale(1);
+            icon.setAlpha(0.5);
+            button.setAlpha(0.5);
+          });
+          button.on('pointerup', () => {
+            button.setScale(1);
+            icon.setScale(1);
+
+            this.player.buyAttribute(key as Attribute);
+            this.updateRewards();
+            this.updateAttributes();
+            this.updateChip();
+          });
+
+          button.on('pointerover', () => {
+            button.setAlpha(1);
+            icon.setAlpha(1);
+          });
+
+          this.profileContainer[`button${key}`] = button;
+          this.profileContainer[`icon${key}`] = icon;
+        },
+      );
+    }
+  }
+
+  public updateRewards() {
+    if (this.player.leveling.rewardCount === 0) {
+      this.profileContainer.availableText.destroy();
+      this.profileContainer.availableText.destroy();
+      Object.entries(Attribute).forEach(([key]) => {
+        this.profileContainer[`button${key}`].destroy();
+        this.profileContainer[`icon${key}`].destroy();
+      });
+    } else {
+      const available = this.profileContainer.availableText as DataRow;
+      available.value.text = this.player.leveling.rewardCount.toString();
+    }
+  }
+
+  private updateAttributes() {
+    Object.entries(Attribute).forEach(([key]) => {
+      const dataRow = this.profileContainer[key] as DataRow;
+      dataRow.value.text = this.player.attributes[key as Attribute].toString();
+    });
+  }
+
   private createProfile() {
-    const character = this.add.sprite(136, 136, this.player.texture)
+    const character = this.add.sprite(258, 136, this.player.texture)
       .play(`${this.player.entity.anims}_idle_${Direction.DOWN}`)
       .setScale(4);
-    const name = this.add.text(136 + 128, 136, this.player.entity.name, {
+    const name = this.add.text(354, 70, this.player.entity.name, {
       fontFamily: 'minecraft',
-      fontSize: '64px',
+      fontSize: '70px',
     });
-    this.profileContainer = this.add.container(0, 0, [character, name]);
+    const level = this.add.text(354, 122, `Level ${this.player.leveling.currentLevel.index}`, {
+      fontFamily: 'minecraft',
+      fontSize: '70px',
+    }).setAlpha(0.8);
+
+    const experience = this.add.text(218, 232, 'exp', {
+      fontFamily: 'minecraft',
+      fontSize: '32px',
+    }).setAlpha(0.8);
+
+    const experienceGauge = this.add.gauge(
+      218 + 96,
+      244,
+      Colors.blueExp,
+      this.player.leveling.getExperienceRatio(),
+    );
+
+    const attributes = Object.entries(this.player.attributes).reduce(
+      (acc, [key, value], index) => ({
+        ...acc,
+        [key]: this.add.dataRow(218, 420 + index * 48, { key, value }),
+      }), {},
+    );
+
+    this.profileContainer = {
+      character,
+      name,
+      level,
+      experience,
+      expGaugeBG: experienceGauge.background,
+      expGauge: experienceGauge.gauge,
+      ...attributes,
+    };
+
+    this.createRewards();
   }
 }
 

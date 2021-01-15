@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Direction } from 'src/utils/Direction';
-import { State } from 'src/engine/system/StateMachine';
+import { State, StateMachine } from 'src/engine/system/StateMachine';
 import {
   Order,
 } from 'src/utils/Order';
@@ -15,47 +15,58 @@ export type StateMachineOptions = {
   scene: Phaser.Scene;
 };
 
+const executeFreeActions = (
+  stateMachine: StateMachine<StateMachineOptions>,
+  { character, name }: StateMachineOptions,
+  callback?: () => void,
+) => {
+  const { orders } = character;
+  if (character.health.isDead()) {
+    stateMachine.transition('dead');
+    return;
+  }
+
+  if (character.isFalling()) {
+    stateMachine.transition('falling');
+    return;
+  }
+
+  if (character.health.isDamaged()) {
+    stateMachine.transition('damage');
+    return;
+  }
+
+  if (orders[Order.ACTION_ONE]) {
+    stateMachine.transition('action');
+    return;
+  }
+
+  if (orders[Order.JUMP]) {
+    if (character.energy && character.energy > 30) {
+      stateMachine.transition('jump');
+      return;
+    }
+  }
+
+  if (orders[Order.DOWN]
+    || orders[Order.LEFT]
+    || orders[Order.RIGHT]
+    || orders[Order.UP]
+  ) {
+    stateMachine.transition('move');
+  }
+
+  callback?.();
+};
+
 export class IdleState extends State<StateMachineOptions> {
   enter = ({ character, name }: StateMachineOptions) => {
     character.setVelocity(0);
     character.anims.play(`${name}_idle_${character.direction.value}`, true);
   }
 
-  execute({ character, name }: StateMachineOptions) {
-    const { orders } = character;
-    if (character.health.isDead()) {
-      this.stateMachine.transition('dead');
-      return;
-    }
-
-    if (character.isFalling()) {
-      this.stateMachine.transition('falling');
-      return;
-    }
-
-    if (character.health.isDamaged()) {
-      this.stateMachine.transition('damage');
-      return;
-    }
-
-    if (orders[Order.ACTION_ONE]) {
-      this.stateMachine.transition('action');
-      return;
-    }
-
-    if (orders[Order.JUMP]) {
-      if (character.energy && character.energy > 30) {
-        this.stateMachine.transition('jump');
-        return;
-      }
-    }
-    if (orders[Order.DOWN]
-      || orders[Order.LEFT]
-      || orders[Order.RIGHT]
-      || orders[Order.UP]
-    ) {
-      this.stateMachine.transition('move');
-    }
+  execute(options: StateMachineOptions) {
+    executeFreeActions(this.stateMachine, options);
   }
 }
 

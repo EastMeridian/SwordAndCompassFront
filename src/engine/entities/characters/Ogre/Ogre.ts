@@ -1,14 +1,10 @@
 import Phaser from 'phaser';
 import { Direction } from 'src/utils/Direction';
-import {
-  Orders,
-  createOrders,
-  Order,
-} from 'src/utils/Order';
 import HealthComponent from 'src/engine/components/HealthComponent';
 import DirectionComponent from 'src/engine/components/DirectionComponent';
 import { StateMachine } from 'src/engine/system/StateMachine';
 
+import { EnemyData, OgreData } from 'src/engine/data/entities';
 import {
   IdleState,
   FollowState,
@@ -20,8 +16,9 @@ import {
 } from './States';
 import Character from '../Character';
 import DetectionCircle from '../../others/DetectionCircle';
+import Enemy from '../Enemy';
 
-class Ogre extends Character {
+class Ogre extends Enemy {
     private detectionCircle!: DetectionCircle;
 
   public health: HealthComponent;
@@ -30,20 +27,20 @@ class Ogre extends Character {
 
   public direction: DirectionComponent;
 
-  public speed = 120;
-
   public target: Phaser.Physics.Arcade.Sprite | null = null;
 
   public balloon?: Phaser.GameObjects.Sprite;
 
-  orders: Orders = createOrders({ [Order.DOWN]: true });
+  public entity: EnemyData;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
+
+    this.entity = OgreData;
     this.direction = new DirectionComponent(Direction.DOWN);
     this.health = new HealthComponent({
       scene,
-      health: 10,
+      health: OgreData.health,
       character: this,
       tenacity: 4,
     });

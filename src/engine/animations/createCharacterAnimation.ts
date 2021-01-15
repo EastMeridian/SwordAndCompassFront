@@ -77,6 +77,10 @@ export const createCharacterAnimation = ({
       key: `${name}_dead`,
       frames: [{ key: damageTexture, frame: damageFrame }],
     });
+    scene.anims.create({
+      key: `${name}_seated`,
+      frames: [{ key: damageTexture, frame: damageFrame + 1 }],
+    });
   }
 };
 

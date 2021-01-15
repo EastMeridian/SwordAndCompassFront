@@ -9,6 +9,7 @@ import {
   PLAYER_DEAD,
   PLAYER_ENERGY_CHANGED,
   PLAYER_HEALTH_CHANGED,
+  PLAYER_LEVEL_CHANGED,
   PLAYER_STACKABLE_CHANGED,
 } from 'src/engine/events/events';
 import { StateMachine, State } from 'src/engine/system/StateMachine';
@@ -24,9 +25,10 @@ import SkillsComponent from 'src/engine/components/SkillsComponent';
 import { SkillData } from 'src/engine/components/skills/SkillData';
 import { InventoryComponent } from 'src/engine/components/InventoryComponent';
 import { Stackable } from 'src/engine/components/Stackable';
-import { Attributes } from 'src/engine/components/Attributes';
+import { Attribute, Attributes } from 'src/engine/components/Attributes';
 import { EnemyData, PlayerData } from 'src/engine/data/entities';
 import { LevelingComponent } from 'src/engine/components/LevelingComponent';
+import { Interactives } from 'src/engine/system/factories/createInteractive';
 import Chest from '../../objects/Chest';
 import {
   IdleState,
@@ -39,6 +41,7 @@ import {
   DeadState,
 } from './States';
 import Character from '../Character';
+import { Interactive } from '../../objects/Interactive';
 
 class Player extends Character {
   public energy = 100;
@@ -61,9 +64,7 @@ class Player extends Character {
     return this._damage;
   }
 
-  private arrows?: Phaser.Physics.Arcade.Group;
-
-  private activeChest?: Chest;
+  private activeInteractive?: Interactive;
 
   private energyEvent: any;
 
@@ -98,18 +99,20 @@ class Player extends Character {
     playerData: PlayerData,
   ) {
     super(scene, x, y, playerData.texture);
-    const { attributes, anims } = playerData;
+    const { attributes, anims, health } = playerData;
 
     this.entity = playerData;
     // COMPONENTS
-    this.leveling = new LevelingComponent();
+    this.leveling = new LevelingComponent(() => {
+      sceneEvents.emit(PLAYER_LEVEL_CHANGED);
+    });
 
     this.direction = new DirectionComponent(Direction.DOWN);
 
     this.health = new HealthComponent({
       scene,
       character: this,
-      health: 5,
+      health,
       invulnerabilityTime: 300,
       onChange: (health: number) => {
         sceneEvents.emit(PLAYER_HEALTH_CHANGED, { health, maximum: this.health.maximum });
@@ -191,12 +194,8 @@ class Player extends Character {
     this.falling = falling;
   }
 
-  setArrows(arrows: Phaser.Physics.Arcade.Group) {
-    this.arrows = arrows;
-  }
-
-  setActiveChest(chest: Chest) {
-    this.activeChest = chest;
+  setActiveInteractive(interactive: Interactive) {
+    this.activeInteractive = interactive;
   }
 
   getPointerDirection() {
@@ -277,9 +276,8 @@ class Player extends Character {
 
   update(keys: any) {
     if (Phaser.Input.Keyboard.JustDown(keys.E)) {
-      if (this.activeChest) {
-        const items = this.activeChest.open();
-        items.forEach(({ name, amount }) => this.inventory.provide(name, amount));
+      if (this.activeInteractive) {
+        this.activeInteractive.interact(this);
       }
     }
 
@@ -292,6 +290,16 @@ class Player extends Character {
     this.orders = getOrderFromKeys(keys);
 
     this.skills.update();
+  }
+
+  public buyAttribute(name: Attribute) {
+    if (this.leveling.consumeReward()) {
+      if (name === Attribute.speed) {
+        this.attributes[name] += 2;
+      } else {
+        this.attributes[name] += 1;
+      }
+    }
   }
 
   destroy() {

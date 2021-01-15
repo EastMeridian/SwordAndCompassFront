@@ -19,7 +19,6 @@ import {
 import { Direction } from 'src/utils/Direction';
 import MusicManager from '../system/MusicManager';
 import SoundManager from '../system/SoundManager';
-import FormUtil from './UI/FormUtil';
 
 class StartScene extends Phaser.Scene {
   private sprites: Phaser.GameObjects.Sprite[] = [];

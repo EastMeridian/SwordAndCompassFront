@@ -1,25 +1,22 @@
 import Phaser from 'phaser';
 import SoundManager from 'src/engine/system/SoundManager';
+import { ExitStatus } from 'typescript';
+import { DataPair, DataRow } from './UIComponents/DataRow';
 
-interface Shortcut {
-  key: string;
-  action: string;
-}
+const shortcutList: DataPair[] = [
+  { key: 'z', value: 'Move forward' },
+  { key: 'q', value: 'Move left' },
+  { key: 's', value: 'Move backward' },
+  { key: 'd', value: 'Move right' },
 
-const shortcutList: Shortcut[] = [
-  { key: 'z', action: 'Move forward' },
-  { key: 'q', action: 'Move left' },
-  { key: 's', action: 'Move backward' },
-  { key: 'd', action: 'Move right' },
-
-  { key: 'a', action: 'Change spell' },
-  { key: 'e', action: 'Interact' },
-  { key: 'space', action: 'Jump' },
-  { key: 'mouse_button_left', action: 'Fire spell' },
+  { key: 'a', value: 'Change spell' },
+  { key: 'e', value: 'Interact' },
+  { key: 'space', value: 'Jump' },
+  { key: 'mouse_button_left', value: 'Fire spell' },
 ];
 
-class ActionBarScene extends Phaser.Scene {
-  menuItems: Phaser.GameObjects.Text[] = [];
+class valueBarScene extends Phaser.Scene {
+  menuItems: (Phaser.GameObjects.Text | DataRow)[] = [];
 
   constructor() {
     super({ key: 'ui-actionbar' });
@@ -54,8 +51,8 @@ class ActionBarScene extends Phaser.Scene {
                   fontSize: '32px',
                 },
               ),
-              ...shortcutList.flatMap((shortcut, index) => this.createShortcutRow(
-                shortcut, width / 2, 192 + index * 48,
+              ...shortcutList.map((shortcut, index) => this.createShortcutRow(
+                shortcut, width / 2 - 128, 192 + index * 48,
               )),
             ];
           } else {
@@ -108,28 +105,9 @@ class ActionBarScene extends Phaser.Scene {
     });
   }
 
-  private createShortcutRow({ key, action }: Shortcut, x: number, y: number) {
-    return [
-      this.add.text(
-        x - 128,
-        y,
-        `${action}: `,
-        {
-          fontFamily: 'minecraft',
-          fontSize: '28px',
-        },
-      ),
-      this.add.text(
-        x + 128,
-        y,
-        key,
-        {
-          fontFamily: 'minecraft',
-          fontSize: '28px',
-        },
-      ).setAlpha(0.7),
-    ];
+  private createShortcutRow(data: DataPair, x: number, y: number) {
+    return this.add.dataRow(x, y, data);
   }
 }
 
-export default ActionBarScene;
+export default valueBarScene;

@@ -1,14 +1,11 @@
 import Phaser from 'phaser';
 import { Direction } from 'src/utils/Direction';
-import {
-  Orders,
-  createOrders,
-  Order,
-} from 'src/utils/Order';
+
 import HealthComponent from 'src/engine/components/HealthComponent';
 import DirectionComponent from 'src/engine/components/DirectionComponent';
 import { StateMachine } from 'src/engine/system/StateMachine';
 
+import { BatData, EnemyData } from 'src/engine/data/entities';
 import {
   MoveState,
   DamageState,
@@ -16,6 +13,7 @@ import {
   StateMachineOptions,
 } from './States';
 import Character from '../Character';
+import Enemy from '../Enemy';
 
 const getRandomDirection = (direction: Direction) => {
   let nextDirection;
@@ -25,7 +23,7 @@ const getRandomDirection = (direction: Direction) => {
   return nextDirection;
 };
 
-class PrimitiveAnimal extends Character {
+class PrimitiveAnimal extends Enemy {
   public health: HealthComponent;
 
   private moveEvent: Phaser.Time.TimerEvent;
@@ -34,15 +32,15 @@ class PrimitiveAnimal extends Character {
 
   public direction: DirectionComponent;
 
-  public speed = 150;
-
-  orders: Orders = createOrders({ [Order.DOWN]: true });
+  public entity: EnemyData;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string, anims: string = 'ghost') {
     super(scene, x, y, texture);
 
+    this.entity = BatData;
+
     this.direction = new DirectionComponent(Direction.DOWN);
-    this.health = new HealthComponent({ scene, character: this, health: 2 });
+    this.health = new HealthComponent({ scene, character: this, health: BatData.health });
 
     this.setScale(1.6);
 

@@ -1,7 +1,15 @@
+export enum Attribute {
+  strength = 'strength',
+  constitution = 'constitution',
+  intelligence = 'intelligence',
+  willpower = 'willpower',
+  speed = 'speed',
+}
+
 export interface Attributes {
-  strength: number;
-  constitution: number;
-  /* intelligence: number;
-  willpower: number; */
-  speed: number;
+  [Attribute.strength]: number;
+  [Attribute.constitution]: number;
+  [Attribute.intelligence]: number;
+  [Attribute.willpower]: number;
+  [Attribute.speed]: number;
 }

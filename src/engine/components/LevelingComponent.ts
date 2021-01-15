@@ -6,20 +6,22 @@ interface Level {
   reward: number,
 }
 
+const INITIAL_LEVEL_PRICE = 900;
+
 function* levelMaker(start = 0) {
   let index = start;
   while (true) {
     index++;
     yield {
       index,
-      price: 900 + index * 100,
+      price: INITIAL_LEVEL_PRICE + index * 100,
       reward: 1,
     } as Level;
   }
 }
 
 export class LevelingComponent {
-  private _currentLevel: void | Level;
+  private _currentLevel: Level;
 
   get currentLevel() {
     return this._currentLevel;
@@ -31,11 +33,20 @@ export class LevelingComponent {
     return this._experience;
   }
 
+  private _rewardCount = 50;
+
+  get rewardCount() {
+    return this._rewardCount;
+  }
+
   private generator: Generator<Level, void, unknown>
 
-  constructor() {
+  private onLevelChange?: () => void;
+
+  constructor(onLevelChange?: () => void) {
     this.generator = levelMaker();
     this._currentLevel = this.incrementLevel();
+    this.onLevelChange = onLevelChange;
   }
 
   public addExperience(exp: number) {
@@ -45,11 +56,25 @@ export class LevelingComponent {
         this._experience -= this._currentLevel.price;
         if (this._experience < 0) this._experience = 0;
         this._currentLevel = this.incrementLevel();
+        this._rewardCount += this._currentLevel.reward;
+        this.onLevelChange?.();
       }
     }
   }
 
   private incrementLevel() {
-    return this.generator.next().value;
+    return this.generator.next().value as Level;
+  }
+
+  public getExperienceRatio() {
+    return this.experience / this._currentLevel.price;
+  }
+
+  public consumeReward(count = 1) {
+    if (this._rewardCount > 0) {
+      this._rewardCount -= count;
+      return true;
+    }
+    return false;
   }
 }

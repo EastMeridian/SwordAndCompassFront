@@ -88,6 +88,7 @@ class PreloaderScene extends Phaser.Scene {
       frameWidth: 96,
       frameHeight: 64,
     });
+    this.load.spritesheet('doodads', 'assets/tilesets/Outside_B.png', { frameWidth: 32, frameHeight: 32 });
 
     // SOUND
     this.load.audio('cursor', ['assets/sounds/SE/Cursor2.ogg']);
@@ -112,6 +113,7 @@ class PreloaderScene extends Phaser.Scene {
     this.load.image('mute', 'assets/icons/mute.png');
     this.load.image('volume', 'assets/icons/volume.png');
     this.load.image('gear', 'assets/icons/gear.png');
+    this.load.image('plus', 'assets/icons/plus.png');
   }
 
   create() {

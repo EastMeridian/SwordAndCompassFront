@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { Direction } from 'src/utils/Direction';
 import { State } from 'src/engine/system/StateMachine';
 import { Order } from 'src/utils/Order';
+import { sceneEvents } from 'src/engine/events/EventCenter';
+import { ENEMY_DIE } from 'src/engine/events/events';
 import Ghost from './PrimitiveAnimal';
 
 export type StateMachineOptions = {
@@ -35,7 +37,7 @@ export class MoveState extends State<StateMachineOptions> {
       character.setVelocityX(1);
     }
 
-    character.body.velocity.normalize().scale(character.speed);
+    character.body.velocity.normalize().scale(character.entity.speed);
 
     character.anims.play(`${name}_walk_${character.direction.value}`, true);
   }
@@ -59,6 +61,7 @@ export class DeadState extends State<StateMachineOptions> {
   enter({ character, scene, name }: StateMachineOptions) {
     character.anims.play(`${name}_idle_${character.direction.value}`, true);
     character.setDepth(0);
+    sceneEvents.emit(ENEMY_DIE, character.entity);
 
     scene.tweens.add({
       targets: character,

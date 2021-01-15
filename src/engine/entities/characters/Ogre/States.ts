@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Direction, getDirectionFromVector } from 'src/utils/Direction';
 import { State } from 'src/engine/system/StateMachine';
+import { sceneEvents } from 'src/engine/events/EventCenter';
+import { ENEMY_DIE } from 'src/engine/events/events';
 import Ogre from './Ogre';
 
 export type StateMachineOptions = {
@@ -109,7 +111,7 @@ export class FollowState extends State<StateMachineOptions> {
 
     character.setVelocity(0);
 
-    const delta = character.getTargetDeltaVector()?.scale(character.speed);
+    const delta = character.getTargetDeltaVector()?.scale(character.entity.speed);
     if (delta) {
       character.setVelocity(delta.x, delta.y);
       character.direction.setDirection(getDirectionFromVector(character.body.velocity));
@@ -146,6 +148,7 @@ export class DeadState extends State<StateMachineOptions> {
     character.anims.play(`${name}_idle`, true);
     character.balloon?.setAlpha(0);
     character.disableBody();
+    sceneEvents.emit(ENEMY_DIE, character.entity);
     scene.tweens.add({
       targets: character,
       alpha: 0,

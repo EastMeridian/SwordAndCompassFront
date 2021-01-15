@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="64" height="128" tilewidth="64" tileheight="64" infinite="0" nextlayerid="11" nextobjectid="173">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="64" height="128" tilewidth="64" tileheight="64" infinite="0" nextlayerid="11" nextobjectid="180">
  <editorsettings>
   <export target="../public/assets/tilemaps/dongeon_2.json" format="json"/>
  </editorsettings>
@@ -297,7 +297,7 @@
 </data>
  </layer>
  <objectgroup id="4" name="start">
-  <object id="170" gid="1073742257" x="560" y="7392" width="32" height="64" rotation="180"/>
+  <object id="178" gid="1073742257" x="560" y="7472" width="32" height="64" rotation="180"/>
  </objectgroup>
  <objectgroup id="5" name="holes">
   <object id="35" x="208" y="6656" width="688" height="96"/>
@@ -460,14 +460,33 @@
   <object id="146" gid="733" x="2880" y="7680" width="64" height="64"/>
   <object id="147" gid="733" x="2882" y="7742" width="64" height="64"/>
  </objectgroup>
- <objectgroup id="9" name="chests">
-  <object id="58" gid="817" x="208" y="4816" width="32" height="32"/>
-  <object id="60" gid="1" x="2040" y="8192" width="16" height="16"/>
-  <object id="61" gid="1" x="-792" y="6248" width="16" height="16"/>
-  <object id="151" gid="817" x="400" y="2512" width="32" height="32"/>
-  <object id="152" gid="817" x="3408" y="7568" width="32" height="32"/>
-  <object id="171" gid="1235" x="256" y="4832" width="64" height="64"/>
-  <object id="172" gid="439" x="272" y="4912" width="32" height="64"/>
+ <objectgroup id="9" name="interactives">
+  <object id="58" gid="817" x="208" y="4816" width="32" height="32">
+   <properties>
+    <property name="type" value="chest"/>
+   </properties>
+  </object>
+  <object id="171" gid="1235" x="256" y="4832" width="64" height="64">
+   <properties>
+    <property name="type" value="pnj_hooded"/>
+   </properties>
+  </object>
+  <object id="172" gid="439" x="272" y="4912" width="32" height="64">
+   <properties>
+    <property name="name" value="enclave"/>
+    <property name="type" value="bonfire"/>
+   </properties>
+  </object>
+  <object id="176" gid="817" x="400" y="2512" width="32" height="32">
+   <properties>
+    <property name="type" value="chest"/>
+   </properties>
+  </object>
+  <object id="177" gid="817" x="3344" y="7568" width="32" height="32">
+   <properties>
+    <property name="type" value="chest"/>
+   </properties>
+  </object>
  </objectgroup>
  <layer id="3" name="overlay" width="64" height="128">
   <data encoding="csv">

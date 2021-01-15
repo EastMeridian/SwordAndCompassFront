@@ -18,7 +18,7 @@ import {
   createSkeletonAnimation,
   createSpiderAnimation,
 } from 'src/engine/animations/createMonsterAnimation';
-import { createChestAnimation } from 'src/engine/animations/createChestAnimation';
+import { createBonfireAnimation, createChestAnimation } from 'src/engine/animations/createInteractivesAnimation';
 import { createGroundSpikeAnimation } from 'src/engine/animations/createGroundSpikeAnimation';
 import { createTorchLightAnimation } from 'src/engine/animations/createTorchLightAnimation';
 import { createweaponAnimation } from 'src/engine/animations/createWeaponAnimation';
@@ -30,7 +30,7 @@ import Bokoblin from 'src/engine/entities/characters/Bokoblin/Bokoblin';
 import DetectionCircle from 'src/engine/entities/others/DetectionCircle';
 import { correctTiledPointX, correctTiledPointY } from 'src/utils/misc';
 import { getOverlapPercentage } from 'src/utils/Collisions';
-import { createMonster, createMonsters, Monsters } from 'src/engine/system/factories/createMonster';
+import { createMonster, createMonsters, Monsters } from 'src/engine/system/factories/Monster/createMonster';
 import { PIPELINE } from 'src/constants';
 import { createBalloonAnimation } from '../animations/createBalloonAnimation';
 import Character from '../entities/characters/Character';
@@ -42,6 +42,8 @@ import HealSkill from '../components/skills/HealSkill';
 import { PlayerData } from '../data/entities';
 import MusicManager from '../system/MusicManager';
 import SoundManager from '../system/SoundManager';
+import { createInteractives, Interactives } from '../system/factories/createInteractive';
+import Bonfire from '../entities/objects/Bonfire';
 
 class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -54,6 +56,8 @@ class GameScene extends Phaser.Scene {
 
   public monsters?: Monsters;
 
+  public interactives?: Interactives;
+
   private torchLights!: Phaser.Physics.Arcade.StaticGroup;
 
   private smallLens!: Phaser.GameObjects.Arc;
@@ -63,6 +67,10 @@ class GameScene extends Phaser.Scene {
   private playerDead: boolean;
 
   private playerData!: PlayerData;
+
+  private respawnPosition?: { x: number, y: number };
+
+  public bonfiresLit: string[] = [];
 
   constructor() {
     super('game');
@@ -78,7 +86,7 @@ class GameScene extends Phaser.Scene {
 
   preload() {
     const {
-      Z, Q, S, D, E, A, SPACE,
+      Z, Q, S, D, E, A, X, SPACE,
     } = Phaser.Input.Keyboard.KeyCodes;
 
     this.keys = this.input.keyboard.addKeys({
@@ -89,6 +97,7 @@ class GameScene extends Phaser.Scene {
       space: SPACE,
       E,
       A,
+      X,
     });
   }
 
@@ -122,7 +131,9 @@ class GameScene extends Phaser.Scene {
       volume: 0.2,
     });
 
-    this.sound.add('dongeon_music');
+    this.sound.add('dongeon_music', {
+      volume: 0.5,
+    });
     MusicManager.setScene(this);
 
     createForesterAnimation(this);
@@ -139,6 +150,8 @@ class GameScene extends Phaser.Scene {
     createBatAnimation(this);
     createScorpionAnimation(this);
     createSpiderAnimation(this);
+    createBonfireAnimation(this);
+
     this.mapManager = new MapManager(this);
 
     this.cameras.main.setBounds(
@@ -155,10 +168,6 @@ class GameScene extends Phaser.Scene {
       this.mapManager.map.heightInPixels,
     );
 
-    const chests = this.physics.add.staticGroup({
-      classType: Chest,
-    });
-
     const groundSpikes = this.physics.add.staticGroup({
       classType: GroundSpikes,
     });
@@ -171,7 +180,7 @@ class GameScene extends Phaser.Scene {
       classType: Phaser.GameObjects.Rectangle,
     });
 
-    const chestsLayer = this.mapManager.map.getObjectLayer('chests');
+    const interactivesLayer = this.mapManager.map.getObjectLayer('interactives');
     const monstersLayer = this.mapManager.map.getObjectLayer('monsters');
     const lightLayer = this.mapManager.map.getObjectLayer('lights');
     const spikeLayer = this.mapManager.map.getObjectLayer('spikes');
@@ -190,15 +199,12 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    chestsLayer.objects.forEach((chest) => {
-      chests.get(correctTiledPointX(chest), correctTiledPointY(chest), 'chest').setPipeline(PIPELINE);
-    });
-
     spikeLayer.objects.forEach((spike) => {
       groundSpikes.get(correctTiledPointX(spike), correctTiledPointY(spike), 'chest');
     });
 
     this.monsters = createMonsters(monstersLayer.objects, this);
+    this.interactives = createInteractives(interactivesLayer.objects, this);
 
     this.arrows = this.physics.add.group({
       classType: Arrow,
@@ -212,8 +218,20 @@ class GameScene extends Phaser.Scene {
       },
     });
 
+    if (this.playerData.respawn) {
+      this.respawnPosition = {
+        x: this.playerData.respawn.x,
+        y: this.playerData.respawn.y,
+      };
+    } else {
+      this.respawnPosition = {
+        x: (startPosition.objects[0].x || 0) - 24,
+        y: (startPosition.objects[0].y || 0) + 24,
+      };
+    }
+
     this.player
-      .setPosition((startPosition.objects[0].x || 0) - 24, (startPosition.objects[0].y || 0) + 24)
+      .setPosition(this.respawnPosition.x, this.respawnPosition.y)
       .setSize(30, 32)
       .setMass(0.1)
       .skills
@@ -230,8 +248,11 @@ class GameScene extends Phaser.Scene {
       this.monsters.ogres,
     ];
 
-    this.physics.add.collider(monsters,
-      holesObjects);
+    this.physics.add.collider([
+      this.monsters.skeletons,
+      this.monsters.bokoblins,
+      this.monsters.ogres,
+    ], holesObjects);
 
     this.physics.add.overlap(
       this.player,
@@ -269,8 +290,15 @@ class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(
       this.player,
-      chests,
+      this.interactives.chests,
       this.handlePlayerChestCollision,
+      undefined,
+      this,
+    );
+    this.physics.add.collider(
+      this.player,
+      this.interactives.bonfires,
+      this.handlePlayerBonfireCollision,
       undefined,
       this,
     );
@@ -365,7 +393,7 @@ class GameScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     if (this.playerDead) {
-      this.scene.start('start');
+      this.scene.restart(this.playerData);
       return;
     }
     const pointer = this.input.mousePointer;
@@ -404,7 +432,7 @@ class GameScene extends Phaser.Scene {
         hole.getBottomRight(),
       );
 
-      if (overlapRatio < 0.8) {
+      if (overlapRatio < 0.9) {
         const holeCenter = hole.getCenter();
         const dx = holeCenter.x - this.player.x;
         const dy = holeCenter.y - this.player.y;
@@ -415,6 +443,7 @@ class GameScene extends Phaser.Scene {
         this.player.body.velocity.x += slipVector.x;
         this.player.body.velocity.y += slipVector.y;
       } else if (!this.player.isFalling()) {
+        this.player.setVelocity(0);
         this.player.setFalling(true);
       }
     }
@@ -442,7 +471,7 @@ class GameScene extends Phaser.Scene {
       const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(500);
 
       this.player.health.handleDamage({
-        amount: 1,
+        amount: 100,
         direction,
       });
     }
@@ -453,7 +482,22 @@ class GameScene extends Phaser.Scene {
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const chest = obj2 as Chest;
-    this.player.setActiveChest(chest);
+    this.player.setActiveInteractive(chest);
+  }
+
+  private handlePlayerBonfireCollision(
+    _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ) {
+    const bonfire = obj2 as Bonfire;
+    if (!bonfire.activated) {
+      this.player.setActiveInteractive(bonfire);
+      this.playerData.respawn = {
+        x: bonfire.x,
+        y: bonfire.y - 32,
+      };
+      if (!this.bonfiresLit.includes(bonfire.location)) this.bonfiresLit.push(bonfire.location);
+    }
   }
 
   private handleArrowsWallCollision(
@@ -480,7 +524,7 @@ class GameScene extends Phaser.Scene {
 
       const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
       monster.health.handleDamage({
-        amount: 1.5,
+        amount: 100 + this.player.attributes.strength * 2,
         direction,
       });
     }
@@ -496,7 +540,7 @@ class GameScene extends Phaser.Scene {
 
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(300);
     this.player.health.handleDamage({
-      amount: 2,
+      amount: 200,
       direction,
     });
   }
@@ -540,7 +584,7 @@ class GameScene extends Phaser.Scene {
       const magnetude = monster.body.velocity.length();
       const snaped = Math.max(Phaser.Math.Snap.To((magnetude / 150), 1), 1);
       this.player.health.handleDamage({
-        amount: snaped,
+        amount: snaped * 100,
         direction,
       });
     }

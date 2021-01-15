@@ -3,6 +3,8 @@ import Player from '../entities/characters/Player';
 import SwordSwing from '../entities/spells/SwordSwing';
 import { PlayerData } from '../data/entities';
 import { ActionButtonOptions } from '../scenes/UI/UIComponents/ActionButton';
+import { Gauge } from '../scenes/UI/UIComponents/Gauge';
+import { DataPair, DataRow } from '../scenes/UI/UIComponents/DataRow';
 
 declare global {
   namespace Phaser.GameObjects {
@@ -34,6 +36,19 @@ declare global {
         texture: string,
         options: ActionButtonOptions
       ): Image
+
+      gauge(
+        x: number,
+        y: number,
+        color: number,
+        initialRatio?: number,
+      ): Gauge
+
+      dataRow(
+        x: number,
+        y: number,
+        data: DataPair,
+      ): DataRow
     }
   }
 }

@@ -6,6 +6,10 @@ export interface PlayerData {
   health: number;
   name: string;
   attributes: Attributes;
+  respawn?: {
+    x: number,
+    y: number,
+  }
 }
 
 export const ElfPlayer = {
@@ -28,6 +32,8 @@ export const MountainDwellerPlayer = {
   attributes: {
     strength: 12,
     constitution: 12,
+    intelligence: 12,
+    willpower: 12,
     speed: 200,
   },
 } as PlayerData;
@@ -40,6 +46,8 @@ export const ForesterPlayer = {
   attributes: {
     strength: 12,
     constitution: 12,
+    intelligence: 12,
+    willpower: 12,
     speed: 225,
   },
 } as PlayerData;
@@ -52,6 +60,8 @@ export const WarriorPlayer = {
   attributes: {
     strength: 12,
     constitution: 12,
+    intelligence: 12,
+    willpower: 12,
     speed: 200,
   },
 } as PlayerData;
@@ -64,12 +74,16 @@ export const SorcererPlayer = {
   attributes: {
     strength: 15,
     constitution: 12,
+    intelligence: 12,
+    willpower: 12,
     speed: 200,
   },
 } as PlayerData;
 
 export interface EnemyData {
   experience: number;
+  speed: number;
+  health: number,
 }
 
 export interface BokoblinData extends EnemyData {
@@ -83,7 +97,7 @@ export interface BokoblinData extends EnemyData {
 }
 
 export const BokoblinSwordman = {
-  health: 4,
+  health: 400,
   detection: {
     target: 250,
     hit: 90,
@@ -94,7 +108,7 @@ export const BokoblinSwordman = {
 };
 
 export const BokoblinBowman = {
-  health: 3,
+  health: 300,
   detection: {
     target: 350,
     hit: 330,
@@ -102,4 +116,16 @@ export const BokoblinBowman = {
   speed: 80,
   cooldown: 1250,
   experience: 200,
+};
+
+export const BatData = {
+  experience: 50,
+  speed: 140,
+  health: 100,
+};
+
+export const OgreData = {
+  experience: 500,
+  speed: 140,
+  health: 1200,
 };

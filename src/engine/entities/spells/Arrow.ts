@@ -9,7 +9,7 @@ class Arrow extends Phaser.Physics.Arcade.Image {
 
   private sprite: Phaser.GameObjects.Sprite
 
-  public damage = 1;
+  public damage = 100;
 
   private operating = true;
 

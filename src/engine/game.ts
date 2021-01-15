@@ -6,6 +6,8 @@ import StartScreen from './scenes/StartScene';
 import ActionBarScene from './scenes/UI/ActionBarScene';
 import 'src/engine/entities/characters/Player/Player';
 import 'src/engine/scenes/UI/UIComponents/ActionButton';
+import 'src/engine/scenes/UI/UIComponents/Gauge';
+import 'src/engine/scenes/UI/UIComponents/DataRow';
 
 export const createGameConfig = (debug = false): Phaser.Types.Core.GameConfig => ({
   type: Phaser.AUTO,

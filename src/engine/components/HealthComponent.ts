@@ -101,6 +101,13 @@ export default class HealthComponent {
     this.onChange?.(this._health);
   }
 
+  calculateDamage(amount: number) {
+    if (this.character.attributes) {
+      return amount - this.character.attributes.constitution * 2;
+    }
+    return amount;
+  }
+
   handleDamage(damage: Damage) {
     if (this._health <= 0) {
       return;
@@ -108,7 +115,7 @@ export default class HealthComponent {
     if (this.healthState === HealthState.DAMAGE
       || this.healthState === HealthState.INVULNERABLE) return;
 
-    this._health -= damage.amount;
+    this._health -= this.calculateDamage(damage.amount);
 
     this.character.setVelocity(0);
 
