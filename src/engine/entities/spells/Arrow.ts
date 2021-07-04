@@ -31,14 +31,11 @@ class Arrow extends Phaser.Physics.Arcade.Image {
     this.sprite
       .setScale(1.2)
       .setPosition(
-        this.x + this.direction.x,
-        this.y + this.direction.y,
+        this.x + this.direction.x * 10,
+        this.y + this.direction.y * 10,
       )
       .setRotation(angle + Math.PI)
       .setOrigin(0.75, 0.65)
-      .setDepth((character.direction.value === Direction.DOWN
-        || character.direction.value === Direction.RIGHT)
-        ? 2 : 0)
       .setPipeline(PIPELINE)
       .play('weapon_swing_11')
       .on('animationcomplete', () => {
@@ -49,6 +46,7 @@ class Arrow extends Phaser.Physics.Arcade.Image {
 
         this.setOperating(true);
         this
+
           .setSize(32, 32)
           .setActive(true)
           .setVisible(true)
@@ -60,14 +58,17 @@ class Arrow extends Phaser.Physics.Arcade.Image {
         this.sprite?.setVisible(false);
         onComplete?.();
       });
+    this.depth = (this.y + this.height / 2) - 128;
+    this.sprite.depth = (this.sprite.y + this.sprite.height / 2) - 10;
+    console.log('bow depth', this.sprite.depth);
   }
 
-  update(character: Character) {
+  /*   update(character: Character) {
     this.sprite.setPosition(
       character.x + this.direction.x,
       character.y + this.direction.y,
     );
-  }
+  } */
 
   isOperating() {
     return this.operating;

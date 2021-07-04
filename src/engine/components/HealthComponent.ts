@@ -103,7 +103,8 @@ export default class HealthComponent {
 
   calculateDamage(amount: number) {
     if (this.character.attributes) {
-      return amount - this.character.attributes.constitution * 2;
+      const damage = amount - this.character.attributes.constitution * 2;
+      return damage < amount / 10 ? amount / 10 : damage;
     }
     return amount;
   }

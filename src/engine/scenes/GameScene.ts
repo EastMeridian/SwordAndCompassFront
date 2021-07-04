@@ -23,7 +23,7 @@ import { createGroundSpikeAnimation } from 'src/engine/animations/createGroundSp
 import { createTorchLightAnimation } from 'src/engine/animations/createTorchLightAnimation';
 import { createweaponAnimation } from 'src/engine/animations/createWeaponAnimation';
 import { sceneEvents } from 'src/engine/events/EventCenter';
-import { PLAYER_DEAD } from 'src/engine/events/events';
+import { PLAYER_DEAD, PLAYER_GET_MESSAGE } from 'src/engine/events/events';
 import GroundSpike from 'src/engine/entities/objects/GroundSpike';
 import SwordSwing from 'src/engine/entities/spells/SwordSwing';
 import Bokoblin from 'src/engine/entities/characters/Bokoblin/Bokoblin';
@@ -31,7 +31,7 @@ import DetectionCircle from 'src/engine/entities/others/DetectionCircle';
 import { correctTiledPointX, correctTiledPointY } from 'src/utils/misc';
 import { getOverlapPercentage } from 'src/utils/Collisions';
 import { createMonster, createMonsters, Monsters } from 'src/engine/system/factories/Monster/createMonster';
-import { PIPELINE } from 'src/constants';
+import { DEPTH_MAX, DEPTH_POINTER, PIPELINE } from 'src/constants';
 import { createBalloonAnimation } from '../animations/createBalloonAnimation';
 import Character from '../entities/characters/Character';
 import Skeleton from '../entities/characters/Skeleton/Skeleton';
@@ -44,6 +44,8 @@ import MusicManager from '../system/MusicManager';
 import SoundManager from '../system/SoundManager';
 import { createInteractives, Interactives } from '../system/factories/createInteractive';
 import Bonfire from '../entities/objects/Bonfire';
+import { Interactive } from '../entities/objects/Interactive';
+import PNJ from '../entities/objects/PNJ';
 
 class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -291,10 +293,19 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(
       this.player,
       this.interactives.chests,
-      this.handlePlayerChestCollision,
+      this.handlePlayerInteractiveCollision,
       undefined,
       this,
     );
+
+    this.physics.add.collider(
+      this.player,
+      this.interactives.staticPNJs,
+      this.handlePlayerInteractiveCollision,
+      undefined,
+      this,
+    );
+
     this.physics.add.collider(
       this.player,
       this.interactives.bonfires,
@@ -358,9 +369,9 @@ class GameScene extends Phaser.Scene {
       this.torchLights.get(light.x! + light.width! * 0.5, light.y! - light.height! * 0.5, 'lights');
     });
 
-    this.smallLens = this.add.circle(400, 400, 4, 0xffffff, 0.3).setDepth(5);
+    this.smallLens = this.add.circle(400, 400, 4, 0xffffff, 0.3).setDepth(DEPTH_POINTER);
 
-    this.bigLens = this.add.circle(400, 300, 8, 0xffffff, 0.4).setDepth(5);
+    this.bigLens = this.add.circle(400, 300, 8, 0xffffff, 0.4).setDepth(DEPTH_POINTER);
 
     MusicManager.play('dongeon_music');
     MusicManager.fadeIn(500);
@@ -370,10 +381,10 @@ class GameScene extends Phaser.Scene {
 
     sceneEvents.on(PLAYER_DEAD, () => {
       this.cameras.main.shake(300, 0.01);
-      this.player.setDepth(12).resetPipeline();
+      this.player.setDepth(DEPTH_MAX).resetPipeline();
       const rectangle = this.add
         .rectangle(worldView.centerX, worldView.centerY, width, height, 0x000000)
-        .setDepth(11)
+        .setDepth(DEPTH_MAX - 1)
         .setAlpha(0);
       this.scene.stop('game-ui');
       this.tweens.add({
@@ -396,11 +407,12 @@ class GameScene extends Phaser.Scene {
       this.scene.restart(this.playerData);
       return;
     }
-    const pointer = this.input.mousePointer;
+    const pointer = this.input.activePointer;
     if (this.player) {
       this.player.update(this.keys);
 
       if (!this.player.health.isDead()) {
+        this.input.activePointer.updateWorldPoint(this.cameras.main);
         const dx = pointer.worldX - this.player.x;
         const dy = pointer.worldY - this.player.y;
 
@@ -477,11 +489,12 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  private handlePlayerChestCollision(
+  private handlePlayerInteractiveCollision(
     _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
     obj2: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ) {
     const chest = obj2 as Chest;
+    console.log('interactive collision', chest);
     this.player.setActiveInteractive(chest);
   }
 

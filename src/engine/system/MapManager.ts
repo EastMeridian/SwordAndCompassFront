@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PIPELINE } from 'src/constants';
+import { DEPTH_MAP_OVERLAY, PIPELINE } from 'src/constants';
 
 class MapManager {
   map: Phaser.Tilemaps.Tilemap;
@@ -17,7 +17,7 @@ class MapManager {
     this.tileset = this.map.addTilesetImage('dongeon', 'dongeon', 64, 64, 1, 2);
     this.groundLayer = this.map.createLayer('ground', this.tileset, 0, 0).setPipeline(PIPELINE);
     this.colliderLayer = this.map.createLayer('collider', this.tileset, 0, 0).setPipeline(PIPELINE);
-    this.overlayLayer = this.map.createLayer('overlay', this.tileset, 0, 0).setDepth(3).setPipeline(PIPELINE);
+    this.overlayLayer = this.map.createLayer('overlay', this.tileset, 0, 0).setDepth(DEPTH_MAP_OVERLAY).setPipeline(PIPELINE);
 
     this.colliderLayer.setCollisionByExclusion([-1]);
   }

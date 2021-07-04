@@ -38,7 +38,6 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
       )
       .setOrigin(0.5, 0.85)
       .setRotation(angle - ((-Math.PI) / 4))
-      .setDepth(character.direction.value === Direction.DOWN ? 1 : 0)
       .setPipeline(PIPELINE)
       .play('weapon_swing_1')
       .on('animationcomplete', () => {
@@ -46,6 +45,7 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
         this.destroy();
         this.sprite.destroy();
       });
+    this.sprite.depth = this.y + this.height / 2;
   }
 
   update(character: Character) {
@@ -54,6 +54,7 @@ class SwordSwing extends Phaser.GameObjects.Rectangle {
       character.x + this.direction.x * SPRITE_RATIO,
       character.y + this.direction.y * SPRITE_RATIO,
     );
+    this.depth = this.y + this.height / 2;
   }
 }
 

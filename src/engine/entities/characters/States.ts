@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { DEPTH_FLOOR_OBJECT } from 'src/constants';
 import { sceneEvents } from 'src/engine/events/EventCenter';
 import { ENEMY_DIE } from 'src/engine/events/events';
 import { State } from 'src/engine/system/StateMachine';
@@ -17,7 +18,7 @@ export class DeadState extends State<StateMachineEnemyOptions> {
   // eslint-disable-next-line class-methods-use-this
   enter({ character, scene, name }: StateMachineEnemyOptions) {
     character.anims.play(`${name}_dead`, true);
-    character.setDepth(0);
+    character.setDepth(DEPTH_FLOOR_OBJECT);
     sceneEvents.emit(ENEMY_DIE, character.entity);
     scene.tweens.add({
       targets: character,

@@ -8,11 +8,12 @@ import {
   PLAYER_COINS_CHANGED,
   PLAYER_DEAD,
   PLAYER_ENERGY_CHANGED,
+  PLAYER_GET_MESSAGE,
   PLAYER_HEALTH_CHANGED,
   PLAYER_LEVEL_CHANGED,
   PLAYER_STACKABLE_CHANGED,
 } from 'src/engine/events/events';
-import { StateMachine, State } from 'src/engine/system/StateMachine';
+import { StateMachine } from 'src/engine/system/StateMachine';
 import {
   Orders,
   createOrders,
@@ -90,6 +91,8 @@ class Player extends Character {
 
   public attributes: Attributes;
 
+  public talking = false;
+
   skills: SkillsComponent;
 
   constructor(
@@ -147,8 +150,6 @@ class Player extends Character {
       this.orders[Order.ACTION_ONE] = true;
     }, this);
 
-    this.depth = 1;
-
     this.energyEvent = scene.time.addEvent({
       delay: 500,
       callback: () => {
@@ -176,6 +177,14 @@ class Player extends Character {
     sceneEvents.on(ENEMY_DIE, (enemy: EnemyData) => {
       this.leveling.addExperience(enemy.experience);
     });
+  }
+
+  isTalking() {
+    return this.talking;
+  }
+
+  setTalking(talking = true) {
+    this.talking = talking;
   }
 
   isJumping() {
@@ -290,6 +299,16 @@ class Player extends Character {
     this.orders = getOrderFromKeys(keys);
 
     this.skills.update();
+
+    this.depth = this.y + this.height / 2;
+
+    if (this.talking && this.activeInteractive === undefined) {
+      console.log('player_end_message', this.talking, this.activeInteractive);
+      this.setTalking(false);
+      sceneEvents.emit(PLAYER_GET_MESSAGE);
+    }
+
+    this.activeInteractive = undefined;
   }
 
   public buyAttribute(name: Attribute) {

@@ -91,7 +91,7 @@ export class StrikeState extends State<StateMachineBokoblinOptions> {
     }
   }
 
-  execute({ character, name, scene }: StateMachineBokoblinOptions) {
+  execute({ character }: StateMachineBokoblinOptions) {
     if (character.health.isDead()) {
       this.stateMachine.transition('dead');
       return;

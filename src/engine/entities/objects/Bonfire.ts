@@ -18,7 +18,7 @@ class Bonfire extends Phaser.Physics.Arcade.Sprite implements Interactive {
 
     this.play('bonfire_low');
     scene.add.image(x, y + 20, 'doodads', 164).setScale(1.25).setDepth(3).setPipeline(PIPELINE);
-    this.setDepth(4);
+    this.setDepth(this.y);
     this.light = scene.lights.addLight(x, y + 15, 500).setColor(0xffba56).setIntensity(1);
   }
 
@@ -27,15 +27,19 @@ class Bonfire extends Phaser.Physics.Arcade.Sprite implements Interactive {
     return this;
   }
 
+  lightUp() {
+    this.anims.play('bonfire_full');
+    this.scene.tweens.add({
+      targets: this.light,
+      duration: 250,
+      intensity: 2.3,
+    });
+  }
+
   setActivated(activated = true) {
     this.activated = activated;
     if (activated) {
-      this.anims.play('bonfire_full');
-      this.scene.tweens.add({
-        targets: this.light,
-        duration: 250,
-        intensity: 2.8,
-      });
+      this.lightUp();
     }
     return this;
   }
@@ -43,12 +47,7 @@ class Bonfire extends Phaser.Physics.Arcade.Sprite implements Interactive {
   interact() {
     if (!this.activated) {
       this.activated = true;
-      this.anims.play('bonfire_full');
-      this.scene.tweens.add({
-        targets: this.light,
-        duration: 250,
-        intensity: 2.8,
-      });
+      this.lightUp();
     }
   }
 }

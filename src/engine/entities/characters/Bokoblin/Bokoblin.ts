@@ -143,6 +143,10 @@ class Bokoblin extends Enemy {
 
       this.stateMachine?.step();
       this.skills.update();
+
+      if (!this.health.isDead()) {
+        this.depth = this.y + this.height / 2;
+      }
     }
   }
 

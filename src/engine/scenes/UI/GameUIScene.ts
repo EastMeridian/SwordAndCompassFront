@@ -11,6 +11,7 @@ import {
   PLAYER_CHANGED_SPELL,
   PLAYER_STACKABLE_CHANGED,
   PLAYER_LEVEL_CHANGED,
+  PLAYER_GET_MESSAGE,
 } from 'src/engine/events/events';
 import { Colors } from 'src/styles/Theme';
 import { Direction } from 'src/utils/Direction';
@@ -127,6 +128,9 @@ class GameUIScene extends Phaser.Scene {
     });
 
     this.createChip();
+
+    const messageContainer = this.add.rectangle(width / 2, height - 160, 768, 256, 0x000000)
+      .setAlpha(0);
     // EVENTS
     sceneEvents.on(PLAYER_HEALTH_CHANGED, this.handlePlayerHealthChange, this);
 
@@ -137,6 +141,28 @@ class GameUIScene extends Phaser.Scene {
     sceneEvents.on(PLAYER_CHANGED_SPELL, this.createSpellIcon, this);
 
     sceneEvents.on(PLAYER_LEVEL_CHANGED, this.updateChip, this);
+
+    sceneEvents.on(PLAYER_GET_MESSAGE, (data?: string) => {
+      const message = this.add.text(messageContainer.x, messageContainer.y, data || '', {
+        fontFamily: 'minecraft',
+        fontSize: '28px',
+      }).setOrigin(0.5, 0.5).setAlpha(0);
+      if (data) {
+        console.log(data);
+
+        this.tweens.add({
+          targets: message,
+          duration: 200,
+          alpha: 0.85,
+        });
+      } else {
+        this.tweens.add({
+          targets: message,
+          duration: 200,
+          alpha: 0,
+        });
+      }
+    });
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       sceneEvents.off(PLAYER_HEALTH_CHANGED, this.handlePlayerHealthChange, this);
@@ -243,10 +269,10 @@ class GameUIScene extends Phaser.Scene {
       });
       Object.entries(this.player.attributes).forEach(
         ([key, value], index) => {
-          const button = this.add.rectangle(600, 432 + index * 48, 24, 24, Colors.blueExp)
+          const button = this.add.rectangle(600, 312 + index * 48, 24, 24, Colors.blueExp)
             .setAlpha(0.5)
             .setInteractive();
-          const icon = this.add.image(600, 432 + index * 48, 'plus')
+          const icon = this.add.image(600, 312 + index * 48, 'plus')
             .setAlpha(0.8);
 
           button.on('pointerdown', () => {
@@ -304,9 +330,10 @@ class GameUIScene extends Phaser.Scene {
   }
 
   private createProfile() {
+    const { height } = this.cameras.main;
     const character = this.add.sprite(258, 136, this.player.texture)
       .play(`${this.player.entity.anims}_idle_${Direction.DOWN}`)
-      .setScale(4);
+      .setScale(3.5);
     const name = this.add.text(354, 70, this.player.entity.name, {
       fontFamily: 'minecraft',
       fontSize: '70px',
@@ -331,7 +358,7 @@ class GameUIScene extends Phaser.Scene {
     const attributes = Object.entries(this.player.attributes).reduce(
       (acc, [key, value], index) => ({
         ...acc,
-        [key]: this.add.dataRow(218, 420 + index * 48, { key, value }),
+        [key]: this.add.dataRow(218, 300 + index * 48, { key, value }),
       }), {},
     );
 
